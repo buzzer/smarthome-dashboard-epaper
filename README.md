@@ -55,6 +55,16 @@ is set up, off right before deep sleep. On an unmodified board IO4 is not connec
 firmware runs on both. Flash it before doing the modification, otherwise the display gets no power.
 Removing the PWR LED (or cutting its trace) saves another 0.5–1 mA.
 
+Estimated battery life with the 10-minute wake interval and the night pause (awake idle with WiFi
+25 mA measured, refresh 5 s at about 33 mA on roughly every second wake-up, 90 % usable capacity):
+
+| | before (511 µA) | after (216 µA) |
+|---|---|---|
+| Consumption per day | ~18 mAh | ~11 mAh |
+| LiFePO4 700 mAh | ~5 weeks | ~8 weeks |
+| LiFePO4 1800 mAh | ~3 months | ~5 months |
+| LiFePO4 2000 mAh | ~3.5 months | ~5.5 months |
+
 ## Language
 
 Code, comments and logs are in English. The texts shown on the display are German on purpose
