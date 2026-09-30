@@ -57,6 +57,69 @@ Room abbreviations (`DB`, `KZ`, `WZ`, …) follow the German room names and are 
 After the first flash the device runs in deep sleep. For OTA updates, enable maintenance mode in
 Node-RED (retained `esphome/maintenance` = `on`); the device then stays awake on its next wake-up.
 
+## Data interface
+
+The display reads a single JSON document from the MQTT topic `esphome/display`. Publish it with
+`retain`, so the display finds it immediately after waking up, and republish whenever a value changes.
+Any source can produce it (Node-RED, Home Assistant, a script); the parser is `display/parse.h`.
+
+Every field except `v` is optional. A missing field or `null` means "unknown": values show as `–`,
+optional parts (car, print tile, scene tile) are hidden. Unknown fields are ignored.
+
+```json
+{
+  "v": 1,
+  "power": 180,
+  "energy": { "today": 1.7, "yesterday": 4.1 },
+  "out": { "t": 14, "hi": 23, "lo": 14, "h": 72, "bft": 3, "gbft": 5, "detail": "Klarer Himmel", "icon": 800 },
+  "fc": [
+    { "n": "Do", "i": 804, "hi": 21, "lo": 15, "gbft": 4 },
+    { "n": "Fr", "i": 500, "hi": 18, "lo": 11, "gbft": 7 },
+    { "n": "Sa", "i": 802, "hi": 17, "lo": 10, "gbft": 3 }
+  ],
+  "rooms": { "db": [21, 64], "kz": [21, 68], "sz": [21, 64], "wz": [20, 63], "wk": [20, 68], "ga": [21, 62], "we": null },
+  "contacts": { "open": 2, "names": ["SZ-Fen", "KZ-Fen"] },
+  "attention": "",
+  "mode": { "away": false, "holiday": false, "since": "" },
+  "alarm": null,
+  "scene": null,
+  "devices": { "batt": [], "dead": [] },
+  "car": null,
+  "roller": { "fenster": 100, "tuer": 40 },
+  "print": null
+}
+```
+
+| Field | Type and unit | Meaning |
+|---|---|---|
+| `v` | integer | Format version, must be `1`; other versions are ignored |
+| `power` | W | Current power consumption; shown in kW from 1000 W |
+| `energy.today`, `energy.yesterday` | kWh | Energy used today and yesterday |
+| `out.t` | °C | Outdoor temperature; whole degrees keep the large number narrow |
+| `out.hi`, `out.lo` | °C, integer | Today's high and low |
+| `out.h` | % | Outdoor humidity |
+| `out.bft` | Beaufort 0–12 | Mean wind, shown as "Wind N" |
+| `out.gbft` | Beaufort 0–12 | Gusts; from 7 the dry-weather icon turns windy (off again below 6) |
+| `out.detail` | text | Weather description line |
+| `out.icon` | OpenWeatherMap condition ID | Today's weather icon |
+| `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day |
+| `rooms.<key>` | `[°C, %]` or `null` | Temperature and humidity per room; keys `db kz sz wz wk ga we` (see `display/model.h`) |
+| `contacts.open` | integer | Number of open windows and doors; 0 shows "all closed" |
+| `contacts.names` | list of text | Short names of the open contacts, shown in the hint bar; `GA-Tor` and `WE-Tor` are the two garage doors in layout B |
+| `attention` | text | Extra text for the hint bar, shown on the right |
+| `mode.away`, `mode.holiday` | boolean | Either one switches to layout B |
+| `mode.since` | text | Start of the absence, e.g. `"Mo 09:45"` |
+| `alarm` | `{ "text", "at" }` or `null` | Alarm source and time, shown as a problem in layout B |
+| `scene` | `{ "name", "since" }` or `null` | Active scene tile; `Sauna` and `Kamin` also show the related room |
+| `devices.batt`, `devices.dead` | list of text | Devices with an empty battery or without messages; any entry shows the maintenance tile |
+| `car` | object or `null` | `windows`, `lids` (true = closed), `service` (true = due), `range` km, `at` text; shown in layout B |
+| `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
+| `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces the forecast |
+
+The context tiles replace the forecast in this order: print, scene, maintenance. Change detection
+compares everything visible; power, today's energy and humidities use tolerances (see `display/change.h`),
+so small fluctuations do not cause a refresh. The scenarios in `test/scenarios/` are further examples.
+
 ## Tests
 
 From `test/`, with ArduinoJson from the ESPHome build directory:
