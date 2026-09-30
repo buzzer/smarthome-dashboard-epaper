@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
-"""Waveshare 7.5" V2 (neue Panels ab 10/2023) mit 4 Graustufen.
+"""Waveshare 7.5" V2 (new panels from 10/2023) with 4 gray levels.
 
-Erbt den Schwarzweiß-Ablauf von waveshare_epaper (Modell 7.50inV2p) und ergänzt eine zweite Bildebene
-sowie den Graustufen-Ablauf nach Waveshare (Temperaturwert 0x5F wählt die Graustufen-Kurve im Panel).
+Inherits the black-and-white sequence from waveshare_epaper (model 7.50inV2p) and adds a second image
+plane plus two grayscale sequences: Waveshare's OTP waveform (temperature value 0x5F) and custom
+register waveforms from GxEPD2_4G.
 """
 
 CODEOWNERS = []

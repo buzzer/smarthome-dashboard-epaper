@@ -1,5 +1,5 @@
 #pragma once
-// Testbild für den Graustufen-Betrieb (nur auf dem Gerät; zeigt, ob das Panel 4 Stufen kann)
+// Test image for grayscale mode (device only; shows whether the panel can do 4 levels)
 #include "render.h"
 
 namespace dash {
@@ -13,7 +13,7 @@ template<typename D> void render_graytest(D &it, const Fonts &F) {
   it.print(16, 34, F.head, TextAlign::BASELINE_LEFT, "Graustufen-Test");
   it.filled_rectangle(16, 47, 768, 2);
 
-  // vier Flächen
+  // four areas
   struct Band { const char *name; Color c; };
   const Band bands[4] = {{"Weiß", PAPER}, {"Hellgrau", GRAY_LIGHT}, {"Dunkelgrau", GRAY_DARK}, {"Schwarz", INK}};
   for (int i = 0; i < 4; i++) {
@@ -23,12 +23,12 @@ template<typename D> void render_graytest(D &it, const Fonts &F) {
     it.print(x + 92, 244, F.hint, TextAlign::BASELINE_CENTER, bands[i].name);
   }
 
-  // Text in jeder Stufe
+  // text in each level
   it.print(16, 300, F.head, GRAY_LIGHT, TextAlign::BASELINE_LEFT, "Hellgrauer Text 21,5° 64 %");
   it.print(16, 340, F.head, GRAY_DARK, TextAlign::BASELINE_LEFT, "Dunkelgrauer Text 21,5° 64 %");
   it.print(16, 380, F.head, INK, TextAlign::BASELINE_LEFT, "Schwarzer Text 21,5° 64 %");
 
-  // heller Text auf dunkler Fläche, Beschriftung wie im Layout
+  // light text on a dark area, labels as in the layout
   it.filled_rectangle(16, 400, 768, 44, GRAY_DARK);
   it.print(30, 429, F.hint_b, PAPER, TextAlign::BASELINE_LEFT, "Weiß auf Dunkelgrau");
   it.print(770, 429, F.hint, GRAY_LIGHT, TextAlign::BASELINE_RIGHT, "Hellgrau auf Dunkelgrau");

@@ -1,16 +1,16 @@
-# epaper_gray – Lizenz und Herkunft
+# epaper_gray – license and origin
 
-Diese Komponente steht unter der GNU General Public License Version 3 (siehe `LICENSE`).
+This component is licensed under the GNU General Public License version 3 (see `LICENSE`).
 
-## Fremder Code
+## Third-party code
 
-- **Graustufen-Kurven** (`LUT20_VCOM` … `LUT25_BD` in `epaper_gray.cpp`) und die Befehlsfolge in
-  `display_gray_lut_()` stammen aus `GxEPD2_750_T7Y.cpp` der Bibliothek GxEPD2_4G von Jean-Marc Zingg,
-  Fork https://github.com/nicoh88/GxEPD2_4G. Der Fork enthält keine eigene Lizenzdatei; die
-  zugrunde liegende Bibliothek GxEPD2 (https://github.com/ZinggJM/GxEPD2) steht unter GPL-3.0.
-  Laut Quellcode gehen die Kurven auf Beispielcode von Good Display (GDEY075T7) zurück.
-  Geändert: `LUT23_WB`, letzte Phase Richtung Schwarz 2 statt 1 Frame (dunkleres Hellgrau).
-- **Graustufen mit Werkskurve** (`display_gray_otp_()`) folgt dem Beispielcode von Waveshare
-  (EPD_7in5_V2, 4-Gray).
-- **Basisklasse** `WaveshareEPaper7P5InV2P` aus ESPHome (https://github.com/esphome/esphome);
-  der C++-Teil von ESPHome steht unter GPL-3.0.
+- **Grayscale waveforms** (`LUT20_VCOM` … `LUT25_BD` in `epaper_gray.cpp`) and the command sequence in
+  `display_gray_lut_()` are taken from `GxEPD2_750_T7Y.cpp` of the GxEPD2_4G library by Jean-Marc Zingg,
+  fork https://github.com/nicoh88/GxEPD2_4G. The fork has no license file of its own; the underlying
+  library GxEPD2 (https://github.com/ZinggJM/GxEPD2) is licensed under GPL-3.0.
+  According to the source, the waveforms go back to example code by Good Display (GDEY075T7).
+  Modified: `LUT23_WB`, last phase towards black 2 frames instead of 1 (darker light gray).
+- **Grayscale with OTP waveform** (`display_gray_otp_()`) follows Waveshare's example code
+  (EPD_7in5_V2, 4-gray).
+- **Base class** `WaveshareEPaper7P5InV2P` from ESPHome (https://github.com/esphome/esphome);
+  the C++ part of ESPHome is licensed under GPL-3.0.

@@ -6,7 +6,7 @@
 
 namespace dash {
 
-// Liefert false bei unbekannter Version; das Modell bleibt dann unverändert.
+// Returns false for an unknown version; the model is left unchanged then.
 inline bool parse_model(JsonObjectConst x, Model &m) {
   if ((x["v"] | 0) != 1) return false;
   auto ival = [](JsonVariantConst v, int na) -> int { return v.isNull() ? na : (int) lroundf(v.as<float>()); };

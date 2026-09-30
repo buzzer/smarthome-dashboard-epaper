@@ -1,13 +1,13 @@
 #pragma once
 #include "esp_attr.h"
 
-// Liegt im RTC-Speicher: übersteht den Tiefschlaf, nicht aber einen Stromausfall.
-// Prüfsumme über die zuletzt gezeichneten Inhalte; 0 erzwingt einen Bildaufbau.
+// Lives in RTC memory: survives deep sleep, but not a power loss.
+// Checksum of the last drawn content; 0 forces a redraw.
 RTC_DATA_ATTR static uint32_t rtc_last_hash = 0;
 
-// Prüfsummen je Abschnitt, um im Log zu sehen, was einen Bildaufbau ausgelöst hat.
+// Checksums per section, to see in the log what triggered a redraw.
 RTC_DATA_ATTR static uint32_t rtc_part_hash[16] = {0};
 
-// Zuletzt gezeichnete Werte für Toleranzvergleiche (Leistung, Verbrauch, Luftfeuchten).
+// Last drawn values for tolerance checks (power, energy, humidities).
 RTC_DATA_ATTR static bool rtc_drawn_valid = false;
 RTC_DATA_ATTR static int32_t rtc_drawn[12] = {0};

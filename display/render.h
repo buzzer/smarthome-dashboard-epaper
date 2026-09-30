@@ -1,6 +1,7 @@
 #pragma once
-// Zeichnen der Hausanzeige (800 x 480): Layout A Tagesübersicht, Layout B Abwesend.
-// Als Template, damit derselbe Code auf dem ESP32 und im PC-Vergleichstest läuft.
+// Rendering of the home display (800 x 480): layout A daily overview, layout B away.
+// A template so the same code runs on the ESP32 and in the PC comparison test.
+// Texts shown on the display are German on purpose.
 #include <algorithm>
 #include <cstdio>
 #include <string>
@@ -19,8 +20,8 @@ struct Fonts {
   BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big;
 };
 
-// ---------- Formatierung ----------
-inline std::string de1(float v) {  // eine Nachkommastelle, Dezimalkomma
+// ---------- Formatting ----------
+inline std::string de1(float v) {  // one decimal, decimal comma
   char b[16];
   snprintf(b, sizeof(b), "%.1f", v);
   for (char *p = b; *p; p++)
@@ -37,7 +38,7 @@ inline std::string join(const std::vector<std::string> &v, const char *sep) {
   }
   return r;
 }
-inline std::string t_out_text(const Model &m) {  // Außentemperatur (OWM, ganze Grad aus Node-RED)
+inline std::string t_out_text(const Model &m) {  // outdoor temperature (OWM, whole degrees from Node-RED)
   if (std::isnan(m.t_out)) return deg(NA_T);
   if (fabsf(m.t_out - roundf(m.t_out)) < 0.05f) return esphome::to_string((int) roundf(m.t_out)) + "°";
   return de1(m.t_out) + "°";
@@ -48,15 +49,15 @@ inline std::string power_text(const Model &m) {
   return esphome::to_string(m.power) + " W";
 }
 inline const char *owm_icon(int id) {
-  if (id >= 200 && id < 300) return "\U000F0593";                  // Gewitter
-  if (id == 511 || (id >= 611 && id <= 616)) return "\U000F067F";  // Schneeregen
-  if (id >= 502 && id < 600) return "\U000F0596";                  // starker Regen
-  if (id >= 300 && id < 600) return "\U000F0597";                  // Regen
-  if (id >= 600 && id < 700) return "\U000F0598";                  // Schnee
-  if (id >= 700 && id < 800) return "\U000F0591";                  // Nebel
-  if (id == 800) return "\U000F0599";                              // sonnig
-  if (id == 801 || id == 802) return "\U000F0595";                 // teils bewölkt
-  return "\U000F0590";                                             // bewölkt
+  if (id >= 200 && id < 300) return "\U000F0593";                  // thunderstorm
+  if (id == 511 || (id >= 611 && id <= 616)) return "\U000F067F";  // sleet
+  if (id >= 502 && id < 600) return "\U000F0596";                  // heavy rain
+  if (id >= 300 && id < 600) return "\U000F0597";                  // rain
+  if (id >= 600 && id < 700) return "\U000F0598";                  // snow
+  if (id >= 700 && id < 800) return "\U000F0591";                  // fog
+  if (id == 800) return "\U000F0599";                              // sunny
+  if (id == 801 || id == 802) return "\U000F0595";                 // partly cloudy
+  return "\U000F0590";                                             // cloudy
 }
 inline std::string shutter_text(int pos) {
   if (pos < 0) return "–";
@@ -65,7 +66,7 @@ inline std::string shutter_text(int pos) {
   return esphome::to_string(pos) + " % offen";
 }
 
-// ---------- Zeichnen ----------
+// ---------- Drawing ----------
 template<typename D> struct Painter {
   D &it;
   const Fonts &F;
@@ -75,16 +76,16 @@ template<typename D> struct Painter {
     it.get_text_bounds(0, 0, s.c_str(), f, TextAlign::BASELINE_LEFT, &x1, &y1, &w, &h);
     return w;
   }
-  std::string fit(const std::string &s, BaseFont *f, int max_w) {  // mit … kürzen
+  std::string fit(const std::string &s, BaseFont *f, int max_w) {  // shorten with …
     if (width_of(s, f) <= max_w) return s;
     std::string t = s;
     while (!t.empty() && width_of(t + "…", f) > max_w) {
       t.pop_back();
-      while (!t.empty() && (t.back() & 0xC0) == 0x80) t.pop_back();  // keine halben UTF-8-Zeichen
+      while (!t.empty() && (t.back() & 0xC0) == 0x80) t.pop_back();  // no partial UTF-8 characters
     }
     return t + "…";
   }
-  void check_mark(int x, int y, Color c) {  // Haken, y = Grundlinie
+  void check_mark(int x, int y, Color c) {  // check mark, y = baseline
     for (int d = 0; d < 3; d++) {
       it.line(x, y - 8 + d, x + 5, y - 3 + d, c);
       it.line(x + 5, y - 3 + d, x + 15, y - 16 + d, c);
@@ -98,15 +99,15 @@ template<typename D> struct Painter {
   }
 };
 
-// gray = false: alles schwarz wie bisher; gray = true: Beschriftungen und Linien in zwei Grautönen
+// gray = false: everything black; gray = true: labels and lines in two gray levels
 template<typename D, typename T>
 void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = false) {
   Painter<D> P{it, F};
   const Color INK = COLOR_ON;
   const Color PAPER = COLOR_OFF;
-  const Color DARK = gray ? Color(170, 170, 170, 170) : INK;  // Namen, Einheiten, Umrisse, Hinweisbalken
-  const Color LIGHT = gray ? Color(85, 85, 85, 85) : INK;     // Abschnittsbeschriftungen, Trennlinien
-  // Beschriftung dunkelgrau, Wert schwarz; schwarzweiß in einem Aufruf wie bisher
+  const Color DARK = gray ? Color(170, 170, 170, 170) : INK;  // names, units, outlines, hint bar
+  const Color LIGHT = gray ? Color(85, 85, 85, 85) : INK;     // section labels, separators
+  // label dark gray, value black; in black and white a single call as before
   auto label_value = [&](int x, int y, BaseFont *f, const std::string &label, const std::string &value) {
     if (!gray) {
       it.print(x, y, f, TextAlign::BASELINE_LEFT, (label + value).c_str());
@@ -120,7 +121,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   const bool ct_known = m.ct_open != NA_H;
   const bool ct_open = ct_known && m.ct_open > 0;
 
-  // --- Kopfzeile (beide Layouts) ---
+  // --- Header (both layouts) ---
   static const char *const WD[] = {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
   static const char *const MO[] = {"Januar", "Februar", "März",     "April",   "Mai",      "Juni",
                                    "Juli",   "August",  "September", "Oktober", "November", "Dezember"};
@@ -137,9 +138,9 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     it.printf(784, 34, F.room, LIGHT, TextAlign::BASELINE_RIGHT, "Stand %02d:%02d", now.hour, now.minute);
   it.filled_rectangle(16, 47, 768, 2, DARK);
 
-  // ===================== Layout B: Abwesend =====================
+  // ===================== Layout B: away =====================
   if (away) {
-    // Statuszeilen links: 0 = in Ordnung, 1 = Problem (invertiert), 2 = Hinweis
+    // Status rows on the left: 0 = ok, 1 = problem (inverted), 2 = notice
     int y = 100;
     auto row = [&](int state, const std::string &text, const std::string &sub) {
       if (state == 1) {
@@ -172,7 +173,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     else
       row(0, "Kein Alarm", "");
     if (ct_known) {
-      // zwei Garagentore: in der Garage und in der Werkstatt
+      // two garage doors: in the garage and in the workshop
       bool ga_open = false, we_open = false;
       for (const auto &k : ct_names) {
         if (k == "GarageTor" || k == "GA-Tor") ga_open = true;
@@ -207,7 +208,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       }
     }
 
-    // Rechte Spalte: Haus, Auto, Geräte
+    // Right column: house, car, devices
     it.line(520, 66, 520, 464, LIGHT);
     int ry = 84;
     auto label = [&](const char *t) {
@@ -252,17 +253,17 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     return;
   }
 
-  // ===================== Layout A: Tagesübersicht =====================
-  // --- Heute ---
+  // ===================== Layout A: daily overview =====================
+  // --- Today ---
   it.print(16, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "HEUTE");
   const std::string t_out = t_out_text(m);
-  // Temperatur groß; das Symbol füllt den Platz bis zur Trennlinie (x = 296)
+  // Large temperature; the icon fills the space up to the separator (x = 296)
   const int t_w_big = P.width_of(t_out, F.big);
   const bool t_small = t_w_big > (m.icon >= 0 ? 226 : 276);
   BaseFont *f_out = t_small ? F.kw : F.big;
   it.print(12, 148, f_out, TextAlign::BASELINE_LEFT, t_out.c_str());
   if (m.icon >= 0) {
-    const int free_l = 12 + P.width_of(t_out, f_out) + 10;  // linker Rand des freien Platzes
+    const int free_l = 12 + P.width_of(t_out, f_out) + 10;  // left edge of the free space
     const int free_w = 292 - free_l;
     if (free_w >= 96)
       it.print(free_l + free_w / 2, 114, F.icon_big, DARK, TextAlign::CENTER, owm_icon(m.icon));
@@ -290,7 +291,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   it.print(16, 200, F.text, DARK, TextAlign::BASELINE_LEFT, P.fit(m.detail, F.text, 272).c_str());
   it.line(296, 62, 296, 200, LIGHT);
 
-  // --- Leistung und Verbrauch ---
+  // --- Power and energy ---
   it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "LEISTUNG");
   if (m.power != NA_P) {
     std::string num, unit;
@@ -310,13 +311,13 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   if (!std::isnan(m.en_yesterday)) label_value(314, 200, F.text, "Gestern ", de1(m.en_yesterday) + " kWh");
   it.line(540, 62, 540, 200, LIGHT);
 
-  // --- Rechte Spalte: Kontextkachel, sonst Vorhersage ---
-  // Vorrang: laufender 3D-Druck, aktive Szene, Wartung
+  // --- Right column: context tile, otherwise forecast ---
+  // Priority: running 3D print, active scene, maintenance
   if (m.pr_active) {
     it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "3D-DRUCK");
     const int p = std::max(0, std::min(100, m.pr_progress));
     it.printf(556, 122, F.tile, TextAlign::BASELINE_LEFT, "%d %%", p);
-    if (gray) it.filled_rectangle(558, 134, 222, 16, LIGHT);  // Rest hellgrau
+    if (gray) it.filled_rectangle(558, 134, 222, 16, LIGHT);  // remainder light gray
     it.rectangle(558, 134, 222, 16);
     it.rectangle(559, 135, 220, 14);
     it.filled_rectangle(558, 134, 222 * p / 100, 16);
@@ -364,7 +365,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     if (shown == 0) it.print(558, 110, F.room, DARK, TextAlign::BASELINE_LEFT, "noch keine Daten");
   }
 
-  // --- Hinweisbalken: nur bei Handlungsbedarf ---
+  // --- Hint bar: only when action is needed ---
   const std::string &attention = m.attention;
   if (ct_open || !attention.empty()) {
     it.filled_rectangle(16, 216, 768, 44, DARK);
@@ -393,14 +394,14 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     it.print(16, 245, F.text, DARK, TextAlign::BASELINE_LEFT, "Alle Fenster und Türen zu");
   }
 
-  // --- Hausquerschnitt nach Ebenen (z2m/0..3) ---
+  // --- House cross-section by floor (z2m/0..3) ---
   it.line(16, 318, 400, 274, DARK);
   it.line(16, 319, 400, 275, DARK);
   it.line(400, 274, 784, 318, DARK);
   it.line(400, 275, 784, 319, DARK);
   it.rectangle(16, 318, 768, 150, DARK);
   it.rectangle(17, 319, 766, 148, DARK);
-  // Innenlinien hellgrau; in Graustufen innerhalb des doppelten Umrisses, damit er nicht unterbrochen wird
+  // Inner lines light gray; in grayscale kept inside the double outline so it is not interrupted
   const int inset = gray ? 2 : 0;
   it.line(16 + inset, 368, 783 - inset, 368, LIGHT);
   it.line(16 + inset, 418, 783 - inset, 418, LIGHT);
@@ -408,7 +409,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   it.line(272, 418, 272, 468 - 2 * inset, LIGHT);
   it.line(528, 418, 528, 468 - 2 * inset, LIGHT);
 
-  // Raum: [Ebene] Name  Temperatur  Feuchte; gibt die Breite zurück, zeichnet nur mit draw = true
+  // Room: [floor] name  temperature  humidity; returns the width, draws only with draw = true
   auto room = [&](int x, int y, const char *floor, const Room &r, bool draw) -> int {
     int cx = x;
     if (floor != nullptr) {
@@ -429,13 +430,13 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   room(414, 350, nullptr, R[SZ], true);
   room(30, 400, "1", R[WZ], true);
 
-  // Rollläden Wohnzimmer: Panzer wird proportional zur Position heruntergezogen
+  // Living room shutters: the curtain is lowered in proportion to the position
   auto shutter = [&](int x, int y, int w, int h, int pos, bool door) {
-    it.filled_rectangle(x - 3, y - 4, w + 6, 4, DARK);  // Rollladenkasten
+    it.filled_rectangle(x - 3, y - 4, w + 6, 4, DARK);  // shutter box
     it.rectangle(x, y, w, h, DARK);
     if (door) {
-      it.filled_rectangle(x + w - 7, y + h / 2, 3, 6, DARK);  // Griff
-    } else {  // Fensterkreuz hellgrau, in Graustufen ohne den Rahmen zu überdecken
+      it.filled_rectangle(x + w - 7, y + h / 2, 3, 6, DARK);  // handle
+    } else {  // window cross light gray, in grayscale without covering the frame
       const int gap = gray ? 1 : 0;
       it.line(x + w / 2, y + gap, x + w / 2, y + h - 1 - gap, LIGHT);
       it.line(x + gap, y + h / 2, x + w - 1 - gap, y + h / 2, LIGHT);
@@ -444,7 +445,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     const int closed = (100 - std::max(0, std::min(100, pos))) * (h - 2) / 100;
     if (closed <= 0) return;
     it.filled_rectangle(x + 1, y + 1, w - 2, closed, DARK);
-    for (int ly = y + 4; ly < y + 1 + closed; ly += 4) it.line(x + 2, ly, x + w - 3, ly, PAPER);  // Lamellen
+    for (int ly = y + 4; ly < y + 1 + closed; ly += 4) it.line(x + 2, ly, x + w - 3, ly, PAPER);  // slats
   };
   shutter(330, 374, 22, 38, m.roll_tu, true);
   label_value(364, 400, F.room, "Tür ", shutter_text(m.roll_tu));

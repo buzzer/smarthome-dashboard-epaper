@@ -1,4 +1,4 @@
-# WLAN, MQTT, OTA, Uhrzeit, Logging
+# WiFi, MQTT, OTA, time, logging
 logger:
 
 ota:
@@ -8,7 +8,7 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  # Schnell verbinden: kein Netzscan, keine DHCP-Anfrage
+  # Fast connect: no network scan, no DHCP request
   fast_connect: true
   manual_ip:
     static_ip: ${static_ip}
@@ -17,20 +17,20 @@ wifi:
     dns1: ${gateway}
   on_connect:
     - lambda: 'id(g_t_wifi) = millis();'
-    # sofort mit MQTT verbinden; beim normalen Start wartet der Client fest 5 s
+    # connect MQTT right away; on a normal start the client waits a fixed 5 s
     - mqtt.enable:
 
 mqtt:
   broker: ${broker}
   topic_prefix: esphome
-  # Ohne native API laufen die Logs über MQTT (ab INFO)
+  # Without the native API, logs go via MQTT (INFO and above)
   log_topic:
     topic: esphome/${name}/log
     level: INFO
-    retain: false   # sonst liefert ein neuer Abonnent die letzte, alte Zeile als erstes
+    retain: false   # otherwise a new subscriber gets the last, old line first
   discovery: false
-  enable_on_boot: false   # wird in wifi.on_connect eingeschaltet
-  idf_send_async: true    # blockiert die Hauptschleife nicht, kostet etwas RAM
+  enable_on_boot: false   # enabled in wifi.on_connect
+  idf_send_async: true    # does not block the main loop, costs some RAM
   reboot_timeout: 5min
   birth_message:
     topic: birth_message
@@ -50,7 +50,7 @@ mqtt:
   on_connect:
     - lambda: 'id(g_t_mqtt) = millis();'
   on_message:
-    # Wartungsmodus aus Node-RED ("Wartung an"/"Wartung aus", retain): wach bleiben für OTA
+    # Maintenance mode from Node-RED ("Wartung an"/"Wartung aus" = maintenance on/off, retained): stay awake for OTA
     - topic: esphome/maintenance
       then:
         - lambda: 'id(g_maint) = (x == "on" || x == "1" || x == "true");'
@@ -64,20 +64,20 @@ mqtt:
                   format: "Wartungsmodus an: bleibe wach"
             else:
               - deep_sleep.allow: deep_sleep_ctrl
-    # Graustufen-Testbild (nur im Wartungsmodus sichtbar)
+    # Grayscale test image (visible only in maintenance mode)
     - topic: esphome/graytest
       then:
         - lambda: 'id(g_graytest) = x == "lut" ? 2 : ((x == "otp" || x == "on") ? 1 : 0);'
   on_json_message:
-    # Alles für das Display aus Node-RED ("Display-Modell", esphome/display, v1)
+    # Everything for the display from Node-RED ("Display-Modell", esphome/display, v1)
     - topic: esphome/display
       then:
         - lambda: |-
             if (!dash::parse_model(x, dash::M)) {
-              ESP_LOGW("display", "Unbekannte Modellversion");
+              ESP_LOGW("display", "Unknown model version");
               return;
             }
-            ESP_LOGD("mqtt_in", "Modell: Leistung %d W, %d offen, Vorhersage %d",
+            ESP_LOGD("mqtt_in", "Model: power %d W, %d open, forecast %d",
                      dash::M.power, dash::M.ct_open, (int) dash::M.fc.size());
 
 time:
@@ -89,7 +89,7 @@ time:
       - 0.pool.ntp.org
       - 1.pool.ntp.org
 
-# Grund des letzten Neustarts (per MQTT mit retain)
+# Reason of the last restart (via MQTT, retained)
 debug:
   update_interval: never
 

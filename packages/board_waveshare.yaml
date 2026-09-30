@@ -1,11 +1,11 @@
-# Waveshare e-Paper ESP32 Driver Board mit 7,5" V2 (800 x 480)
+# Waveshare e-Paper ESP32 Driver Board with 7.5" V2 (800 x 480)
 esp32:
   board: esp32dev
   cpu_frequency: 80MHZ
   framework:
     type: esp-idf
     sdkconfig_options:
-      # Eine volle E-Paper-Auffrischung blockiert die Hauptschleife mehrere Sekunden
+      # A full e-paper refresh blocks the main loop for several seconds
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
 
 spi:
@@ -13,11 +13,11 @@ spi:
   mosi_pin: GPIO14
 
 display:
-  # waveshare_epaper 7.50inV2p plus 4 Graustufen (components/epaper_gray)
+  # waveshare_epaper 7.50inV2p plus 4 gray levels (components/epaper_gray)
   - platform: epaper_gray
     id: eink_display
     grayscale: ${grayscale}
-    data_rate: 8MHz  # Übertragung der Bilddaten; Standard 2 MHz ist bei 80 MHz CPU-Takt langsam
+    data_rate: 8MHz  # image data transfer; the default 2 MHz is slow at 80 MHz CPU clock
     cs_pin: GPIO15
     dc_pin: GPIO27
     busy_pin:
@@ -25,14 +25,14 @@ display:
       inverted: true
     reset_pin: GPIO26
     reset_duration: 2ms
-    # gezeichnet wird nur aus wake_cycle heraus
+    # drawing is triggered only from wake_cycle
     update_interval: never
     lambda: |-
       static const dash::Fonts F{id(f_label), id(f_room),  id(f_text), id(f_hint), id(f_hint_b),
                                  id(f_fc),    id(f_value), id(f_head), id(f_kw),   id(f_big),
                                  id(f_tile),  id(f_icon),  id(f_icon_big)};
-      // Graustufen-Testbild: nur mit Freigabe (esphome/graytest) und frühestens 40 s nach dem Start,
-      // damit vorher ein OTA-Update möglich bleibt, falls der Graustufen-Ablauf hängt
+      // Grayscale test image: only when enabled (esphome/graytest) and no earlier than 40 s after boot,
+      // so an OTA update remains possible first in case the grayscale sequence hangs
       if (id(g_graytest) > 0 && millis() > 40000) {
         id(eink_display).set_mode(id(g_graytest));
         dash::render_graytest(it, F);

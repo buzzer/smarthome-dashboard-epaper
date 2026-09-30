@@ -18,7 +18,7 @@ AUTO_LOAD = ["waveshare_epaper"]
 
 CONF_GRAYSCALE = "grayscale"
 
-# Klassendefinition aus dem Original übernehmen, damit die Vererbungskette (PollingComponent, Display) bekannt ist
+# Reuse the original class definition so the inheritance chain (PollingComponent, Display) is known
 from esphome.components.waveshare_epaper.display import WaveshareEPaper7P5InV2P  # noqa: E402
 
 epaper_gray_ns = cg.esphome_ns.namespace("epaper_gray")

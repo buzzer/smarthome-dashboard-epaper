@@ -1,6 +1,6 @@
 #pragma once
-// Nachbildung der ESPHome-Display-API für den Vergleichstest auf dem PC.
-// Jeder Zeichenbefehl wird als Textzeile protokolliert; Textbreiten sind deterministisch.
+// Mock of the ESPHome display API for the comparison test on the PC.
+// Every draw call is logged as a text line; text widths are deterministic.
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
@@ -13,7 +13,7 @@ namespace esphome {
 struct Color {
   int v;
   constexpr Color(int value = 0) : v(value) {}
-  constexpr Color(int r, int, int, int) : v(r) {}  // Graustufen: protokolliert als c85 / c170
+  constexpr Color(int r, int, int, int) : v(r) {}  // gray levels: logged as c85 / c170
 };
 inline std::string to_string(int v) { return std::to_string(v); }
 inline std::string to_string(unsigned v) { return std::to_string(v); }
@@ -89,7 +89,7 @@ class Display {
 using namespace display;
 }  // namespace esphome
 
-// Uhrzeit wie esphome::ESPTime (nur die genutzten Felder)
+// Time like esphome::ESPTime (only the fields used)
 struct MockTime {
   bool valid = true;
   int year = 2026, month = 9, day_of_month = 30, day_of_week = 4, hour = 10, minute = 5, second = 0;

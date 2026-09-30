@@ -1,17 +1,17 @@
-# Hausanzeige: 7,5"-E-Paper mit Daten aus Node-RED ("Display-Modell" -> esphome/display)
-# Aufbau: Pakete in packages/, Datenmodell, Zeichnen und Änderungserkennung als C++ in display/
+# Home display: 7.5" e-paper fed by Node-RED ("Display-Modell" -> esphome/display)
+# Layout: packages in packages/, data model, rendering and change detection as C++ in display/
 substitutions:
   name: home-dashboard-1
   static_ip: 192.168.66.70
   gateway: 192.168.66.1
   broker: 192.168.66.99
-  # Weckplan in Minuten; Nachtpause von night_from bis night_to Uhr (außer bei laufendem Druck)
+  # Wake schedule in minutes; night pause from night_from to night_to o'clock (except while printing)
   wake_home_min: "10"
   wake_away_min: "30"
   wake_active_min: "5"
   night_from: "23"
   night_to: "6"
-  # 4 Graustufen (eigene Kurven); "false" zeichnet schwarzweiß wie bisher, Grautöne werden dann schwarz
+  # 4 gray levels (custom waveforms); "false" draws black and white, gray elements then become black
   grayscale: "true"
 
 external_components:
