@@ -1,0 +1,21 @@
+# Black-and-white display with ESPHome's standard waveshare_epaper driver (model 7.50inV2p).
+# Uses no GPL-licensed file from this project; see README, section License.
+display:
+  - platform: waveshare_epaper
+    model: 7.50inV2p
+    id: eink_display
+    data_rate: 8MHz  # image data transfer; the default 2 MHz is slow at 80 MHz CPU clock
+    cs_pin: GPIO15
+    dc_pin: GPIO27
+    busy_pin:
+      number: GPIO25
+      inverted: true
+    reset_pin: GPIO26
+    reset_duration: 2ms
+    # drawing is triggered only from wake_cycle
+    update_interval: never
+    lambda: |-
+      static const dash::Fonts F{id(f_label), id(f_room),  id(f_text), id(f_hint), id(f_hint_b),
+                                 id(f_fc),    id(f_value), id(f_head), id(f_kw),   id(f_big),
+                                 id(f_tile),  id(f_icon),  id(f_icon_big)};
+      dash::render(it, dash::M, F, id(sntp_time).now(), false);

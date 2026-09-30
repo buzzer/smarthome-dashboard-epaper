@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480" role="img" aria-label="Layout B away checklist with 4 gray levels" font-family="Verdana, 'DejaVu Sans', sans-serif" fill="#000">
+        <rect width="800" height="480" fill="#fff"/>
+        <text x="16" y="34" font-size="24" font-weight="bold">Abwesend seit Mo 09:45</text>
+        <text x="784" y="34" font-size="16" text-anchor="end" fill="#A8A8A8">Stand 10:14</text>
+        <rect x="16" y="47" width="768" height="2" fill="#6A6A6A"/>
+        <g font-size="24" font-weight="bold">
+          <rect x="16" y="66" width="488" height="48"/>
+          <g stroke="#fff" stroke-width="3"><line x1="31" y1="85" x2="44" y2="99"/><line x1="44" y1="85" x2="31" y2="99"/></g>
+          <text x="58" y="100" fill="#fff">2 Kontakte offen</text>
+          <text x="58" y="136" font-size="17" font-weight="normal" fill="#6A6A6A">SZ-Fen · KZ-Fen</text>
+          <g fill="none" stroke="#6A6A6A" stroke-width="3">
+            <polyline points="28,180 33,185 43,172"/><polyline points="28,232 33,237 43,224"/><polyline points="28,284 33,289 43,276"/>
+          </g>
+          <text x="58" y="188" fill="#6A6A6A">Kein Alarm</text>
+          <text x="58" y="240" fill="#6A6A6A">Beide Garagentore zu</text>
+          <text x="58" y="292" fill="#6A6A6A">Auto: Fenster und Türen zu</text>
+          <text x="32" y="344">!</text>
+          <text x="58" y="344">Waschk. 71 % Feuchte</text>
+        </g>
+        <line x1="520" y1="66" x2="520" y2="464" stroke="#A8A8A8"/>
+        <g font-size="16">
+          <text x="540" y="84" font-size="13" fill="#A8A8A8">HAUS</text>
+          <text x="540" y="116" fill="#6A6A6A">Innen min</text><text x="784" y="116" text-anchor="end" font-weight="bold" font-size="18">18° Waschk.</text>
+          <text x="540" y="144" fill="#6A6A6A">Innen max</text><text x="784" y="144" text-anchor="end" font-weight="bold" font-size="18">22° Dachb.</text>
+          <text x="540" y="172" fill="#6A6A6A">Leistung</text><text x="784" y="172" text-anchor="end" font-weight="bold" font-size="18">310 W</text>
+          <text x="540" y="200" fill="#6A6A6A">Außen</text><text x="784" y="200" text-anchor="end" font-weight="bold" font-size="18">17°</text>
+          <text x="540" y="246" font-size="13" fill="#A8A8A8">AUTO</text>
+          <text x="540" y="278" fill="#6A6A6A">Reichweite</text><text x="784" y="278" text-anchor="end" font-weight="bold" font-size="18">520 km</text>
+          <text x="540" y="306" fill="#6A6A6A">Service</text><text x="784" y="306" text-anchor="end" font-weight="bold" font-size="18">nicht fällig</text>
+          <text x="540" y="334" fill="#6A6A6A">Stand</text><text x="784" y="334" text-anchor="end" font-weight="bold" font-size="18">28.09., 08:10</text>
+          <text x="540" y="380" font-size="13" fill="#A8A8A8">GERÄTE</text>
+          <text x="540" y="412" fill="#6A6A6A">Batterie leer</text><text x="784" y="412" text-anchor="end" font-weight="bold" font-size="18">0</text>
+          <text x="540" y="440" fill="#6A6A6A">Ohne Meldung</text><text x="784" y="440" text-anchor="end" font-weight="bold" font-size="18">0</text>
+        </g>
+      </svg>

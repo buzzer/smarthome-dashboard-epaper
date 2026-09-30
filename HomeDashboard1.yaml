@@ -11,17 +11,13 @@ substitutions:
   wake_active_min: "5"
   night_from: "23"
   night_to: "6"
-  # 4 gray levels (custom waveforms); "false" draws black and white, gray elements then become black
-  grayscale: "true"
-
-external_components:
-  - source:
-      type: local
-      path: components
-    components: [epaper_gray]
 
 packages:
   board: !include packages/board_waveshare.yaml
+  # Display driver, choose one:
+  # display_gray.yaml: 4 gray levels, uses components/epaper_gray (GPL-3.0)
+  # display_bw.yaml:   black and white with ESPHome's standard driver, no GPL file from this project
+  display: !include packages/display_gray.yaml
   network: !include packages/network.yaml
   fonts: !include packages/fonts.yaml
   cycle: !include packages/cycle.yaml
@@ -34,7 +30,6 @@ esphome:
     - display/rtc_state.h
     - display/change.h
     - display/render.h
-    - display/graytest.h
   on_boot:
     priority: -100
     then:

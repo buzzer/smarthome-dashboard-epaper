@@ -11,32 +11,3 @@ esp32:
 spi:
   clk_pin: GPIO13
   mosi_pin: GPIO14
-
-display:
-  # waveshare_epaper 7.50inV2p plus 4 gray levels (components/epaper_gray)
-  - platform: epaper_gray
-    id: eink_display
-    grayscale: ${grayscale}
-    data_rate: 8MHz  # image data transfer; the default 2 MHz is slow at 80 MHz CPU clock
-    cs_pin: GPIO15
-    dc_pin: GPIO27
-    busy_pin:
-      number: GPIO25
-      inverted: true
-    reset_pin: GPIO26
-    reset_duration: 2ms
-    # drawing is triggered only from wake_cycle
-    update_interval: never
-    lambda: |-
-      static const dash::Fonts F{id(f_label), id(f_room),  id(f_text), id(f_hint), id(f_hint_b),
-                                 id(f_fc),    id(f_value), id(f_head), id(f_kw),   id(f_big),
-                                 id(f_tile),  id(f_icon),  id(f_icon_big)};
-      // Grayscale test image: only when enabled (esphome/graytest) and no earlier than 40 s after boot,
-      // so an OTA update remains possible first in case the grayscale sequence hangs
-      if (id(g_graytest) > 0 && millis() > 40000) {
-        id(eink_display).set_mode(id(g_graytest));
-        dash::render_graytest(it, F);
-        return;
-      }
-      id(eink_display).set_grayscale(${grayscale});
-      dash::render(it, dash::M, F, id(sntp_time).now(), ${grayscale});

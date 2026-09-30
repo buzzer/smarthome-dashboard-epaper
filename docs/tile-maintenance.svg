@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="244" height="150" viewBox="0 0 244 150" role="img" aria-label="Context tile: device maintenance" font-family="Verdana, 'DejaVu Sans', sans-serif" fill="#000">
+        <rect width="244" height="150" fill="#fff"/>
+        <rect x="0" y="0" width="244" height="26"/>
+        <text x="10" y="18" font-size="13" fill="#fff">WARTUNG</text>
+        <text x="10" y="50" font-size="18" font-weight="bold">Batterie leer</text>
+        <text x="10" y="72" font-size="16">Wohnzimmer Fenster</text>
+        <text x="10" y="104" font-size="18" font-weight="bold">Ohne Meldung</text>
+        <text x="10" y="126" font-size="16">Dachboden Sensor</text>
+      </svg>

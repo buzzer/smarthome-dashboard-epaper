@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480" role="img" aria-label="Layout A daily overview, black and white" font-family="Verdana, 'DejaVu Sans', sans-serif" fill="#000">
+        <rect width="800" height="480" fill="#fff"/>
+        <text x="16" y="34" font-size="24" font-weight="bold">Dienstag, 30. September</text>
+        <text x="784" y="34" font-size="16" text-anchor="end">Stand 10:14</text>
+        <rect x="16" y="47" width="768" height="2"/>
+        <text x="16" y="74" font-size="13">HEUTE</text>
+        <text x="12" y="148" font-size="72" font-weight="bold">17°</text>
+        <g fill="none" stroke="#000" stroke-width="5"><circle cx="210" cy="92" r="16"/><path d="M190 136 h54 a15 15 0 0 0 0-30 a22 22 0 0 0-40-6 a15 15 0 0 0-14 36z" fill="#fff"/></g>
+        <polygon points="16,177 28,177 22,166"/><text x="32" y="178" font-size="17">19°</text>
+        <polygon points="68,166 80,166 74,177"/><text x="84" y="178" font-size="17">12°</text>
+        <text x="130" y="178" font-size="17">62 %  Wind 3</text>
+        <text x="16" y="200" font-size="17">Mäßig bewölkt</text>
+        <line x1="296" y1="62" x2="296" y2="200" stroke="#000"/>
+        <text x="314" y="74" font-size="13">LEISTUNG</text>
+        <text x="310" y="140" font-size="58" font-weight="bold">2,8<tspan font-size="24"> kW</tspan></text>
+        <text x="314" y="178" font-size="17">Heute 3,1 kWh</text>
+        <text x="314" y="200" font-size="17">Gestern 9,6 kWh</text>
+        <line x1="540" y1="62" x2="540" y2="200" stroke="#000"/>
+        <text x="558" y="74" font-size="13">VORHERSAGE</text>
+        <g font-size="16" text-anchor="middle">
+          <text x="596" y="102">Mi</text><text x="672" y="102">Do</text><text x="748" y="102">Fr</text>
+          <g fill="none" stroke="#000" stroke-width="3"><circle cx="596" cy="134" r="10"/><path d="M657 144 h30 a8 8 0 0 0 0-16 a12 12 0 0 0-22-3 a8 8 0 0 0-8 19z"/><path d="M733 138 h30 a8 8 0 0 0 0-16 a12 12 0 0 0-22-3 a8 8 0 0 0-8 19z"/></g>
+          <text x="596" y="184" font-weight="bold">18°</text><text x="672" y="184" font-weight="bold">16°</text><text x="748" y="184" font-weight="bold">14°</text>
+          <text x="596" y="202">9°</text><text x="672" y="202">10°</text><text x="748" y="202">9°</text>
+        </g>
+        <rect x="16" y="216" width="768" height="44"/>
+        <g fill="#fff" font-size="18"><text x="30" y="245" font-weight="bold">2 offen</text><text x="112" y="245">SZ-Fen · KZ-Fen</text></g>
+        <g fill="none" stroke="#000" stroke-width="2"><polyline points="16,318 400,274 784,318"/><rect x="16" y="318" width="768" height="150"/><line x1="16" y1="368" x2="784" y2="368"/><line x1="16" y1="418" x2="784" y2="418"/><line x1="400" y1="318" x2="400" y2="368"/><line x1="272" y1="418" x2="272" y2="468"/><line x1="528" y1="418" x2="528" y2="468"/></g>
+        <g font-size="16">
+          <text x="400" y="310" text-anchor="middle"><tspan font-size="13">3 </tspan>Dachboden  <tspan font-weight="bold" font-size="19">22°  63 %</tspan></text>
+          <text x="30" y="350"><tspan font-size="13">2 </tspan>Kinderz.  <tspan font-weight="bold" font-size="19">20°  70 %</tspan></text>
+          <text x="414" y="350">Schlafz.  <tspan font-weight="bold" font-size="19">21°  63 %</tspan></text>
+          <text x="30" y="400"><tspan font-size="13">1 </tspan>Wohnzimmer  <tspan font-weight="bold" font-size="19">20°  65 %</tspan></text>
+          <text x="364" y="400">Tür offen</text><text x="576" y="400">Fenster 40 % offen</text>
+          <text x="30" y="450"><tspan font-size="13">0 </tspan>Waschk.  <tspan font-weight="bold" font-size="19">18°  71 %</tspan></text>
+          <text x="286" y="450">Garage  <tspan font-weight="bold" font-size="19">20°  65 %</tspan></text>
+          <text x="542" y="450">Werkstatt  <tspan font-weight="bold" font-size="19">19°  69 %</tspan></text>
+        </g>
+        <rect x="327" y="370" width="28" height="4"/><rect x="330.5" y="374.5" width="21" height="37" fill="none" stroke="#000"/><rect x="345" y="393" width="3" height="6"/>
+        <rect x="527" y="374" width="40" height="4"/><rect x="530.5" y="378.5" width="33" height="29" fill="none" stroke="#000"/><line x1="547" y1="378" x2="547" y2="408" stroke="#000"/><line x1="530" y1="393" x2="564" y2="393" stroke="#000"/><rect x="531" y="379" width="32" height="17"/>
+        <g stroke="#fff"><line x1="532" y1="382.5" x2="562" y2="382.5"/><line x1="532" y1="386.5" x2="562" y2="386.5"/><line x1="532" y1="390.5" x2="562" y2="390.5"/><line x1="532" y1="394.5" x2="562" y2="394.5"/></g>
+      </svg>

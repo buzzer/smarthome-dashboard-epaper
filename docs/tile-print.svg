@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="244" height="150" viewBox="0 0 244 150" role="img" aria-label="Context tile: 3D print" font-family="Verdana, 'DejaVu Sans', sans-serif" fill="#000">
+        <rect width="244" height="150" fill="#fff"/>
+        <text x="10" y="18" font-size="13">3D-DRUCK</text>
+        <text x="8" y="66" font-size="40" font-weight="bold">64 %</text>
+        <rect x="10" y="78" width="222" height="16" fill="none" stroke="#000" stroke-width="2"/>
+        <rect x="10" y="78" width="142" height="16"/>
+        <text x="10" y="120" font-size="17">noch 1:25 h</text>
+        <text x="10" y="144" font-size="16">Düse 215° · Bett 60°</text>
+      </svg>

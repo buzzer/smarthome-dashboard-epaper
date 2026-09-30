@@ -61,13 +61,9 @@ mqtt:
               - deep_sleep.prevent: deep_sleep_ctrl
               - logger.log:
                   level: INFO
-                  format: "Wartungsmodus an: bleibe wach"
+                  format: "Maintenance mode on: staying awake"
             else:
               - deep_sleep.allow: deep_sleep_ctrl
-    # Grayscale test image (visible only in maintenance mode)
-    - topic: esphome/graytest
-      then:
-        - lambda: 'id(g_graytest) = x == "lut" ? 2 : ((x == "otp" || x == "on") ? 1 : 0);'
   on_json_message:
     # Everything for the display from Node-RED ("Display-Modell", esphome/display, v1)
     - topic: esphome/display
