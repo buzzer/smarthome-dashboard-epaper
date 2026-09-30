@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Vergleichstest alt/neu: zieht Parser- und Zeichencode aus einer YAML-Version (git) und
+erzeugt ein C++-Programm, das alten und neuen Code mit denselben JSON-Szenarien laufen lässt.
+
+Aufruf: build_compare.py <git-rev> <szenario-verzeichnis>
+"""
+import os, re, subprocess, sys
+
+rev, scen_dir = sys.argv[1], sys.argv[2]
+here = os.path.dirname(os.path.abspath(__file__))
+root = os.path.dirname(here)
+yaml = subprocess.check_output(["git", "-C", root, "show", f"{rev}:HomeDashboard1.yaml"], text=True)
+lines = yaml.split("\n")
+
+
+def block_after(start_idx, indent):
+    """Zeilen ab start_idx+1 mit mindestens `indent` Leerzeichen (Lambda-Inhalt)."""
+    out = []
+    for l in lines[start_idx + 1:]:
+        if l.strip() and not l.startswith(" " * indent):
+            break
+        out.append(l[indent:] if l.strip() else "")
+    return "\n".join(out)
+
+
+# Handler für esphome/display
+h = next(i for i, l in enumerate(lines) if l.strip() == "- topic: esphome/display")
+hl = next(i for i in range(h, len(lines)) if lines[i].strip() == "- lambda: |-")
+handler = block_after(hl, 12)
+# Display-Lambda
+d = next(i for i, l in enumerate(lines) if l.strip() == "display:")
+dl = next(i for i in range(d, len(lines)) if lines[i].strip() == "lambda: |-")
+render = block_after(dl, 6)
+
+# Globals -> Struktur
+g_start = next(i for i, l in enumerate(lines) if l == "globals:")
+fields, cur = [], None
+for l in lines[g_start + 1:]:
+    if l and not l.startswith(" "):
+        break
+    m = re.match(r"\s+- id: (\w+)", l)
+    if m:
+        cur = {"id": m.group(1), "type": None, "init": None}
+        fields.append(cur)
+        continue
+    m = re.match(r"\s+type: (.+?)\s*(#.*)?$", l)
+    if m and cur:
+        cur["type"] = m.group(1)
+    m = re.match(r"\s+initial_value: '(.*)'", l)
+    if m and cur:
+        cur["init"] = m.group(1)
+struct = "\n".join(f"  {f['type']} {f['id']}{{{f['init'] if f['init'] is not None else ''}}};" for f in fields)
+
+FONTS = [("label", 13), ("room", 16), ("text", 17), ("hint", 18), ("hint_b", 18), ("fc", 16), ("value", 19),
+         ("head", 24), ("kw", 58), ("big", 72), ("tile", 40), ("icon", 40), ("icon_big", 88)]
+font_defs = "\n".join(f'static esphome::display::BaseFont FONT_{n}{{"{n}", {s}}};' for n, s in FONTS)
+font_ptrs = "\n".join(f"  esphome::display::BaseFont *f_{n} = &FONT_{n};" for n, _ in FONTS)
+new_fonts = "{" + ", ".join(f"&FONT_{n}" for n, _ in FONTS) + "}"
+
+src = f"""// Automatisch erzeugt von build_compare.py – nicht von Hand ändern
+#include "esphome_mock.h"
+#include <ArduinoJson.h>
+#include <array>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <sstream>
+using namespace esphome;
+using std::isnan;  // in der ESP32-Umgebung global verfügbar
+#define ESP_LOGD(...)
+#define ESP_LOGW(...)
+#define ESP_LOGI(...)
+#include "../../display/render.h"
+#include "../../display/parse.h"
+
+{font_defs}
+
+struct SntpMock {{ MockTime t; MockTime now() const {{ return t; }} }};
+struct Old {{
+{struct}
+{font_ptrs}
+  SntpMock sntp_time;
+}};
+static Old OLD;
+#define id(x) OLD.x
+
+static void old_parse(JsonObjectConst x) {{
+{handler}
+}}
+static void old_render(esphome::display::Display &it) {{
+{render}
+}}
+#undef id
+
+int main(int argc, char **argv) {{
+  int fails = 0;
+  for (int i = 1; i < argc; i++) {{
+    std::ifstream f(argv[i]); std::stringstream ss; ss << f.rdbuf();
+    JsonDocument doc; deserializeJson(doc, ss.str());
+    MockTime t;
+    if (doc["_time"].is<JsonObjectConst>()) {{
+      t.valid = doc["_time"]["valid"] | true; t.hour = doc["_time"]["hour"] | 10;
+    }}
+    OLD = Old{{}}; OLD.sntp_time.t = t;
+    old_parse(doc.as<JsonObjectConst>());
+    esphome::display::Display a; old_render(a);
+    dash::Model m; dash::parse_model(doc.as<JsonObjectConst>(), m);
+    dash::Fonts F{new_fonts};
+    esphome::display::Display b; dash::render(b, m, F, t);
+    bool same = a.log == b.log;
+    std::cout << (same ? "GLEICH   " : "ANDERS   ") << argv[i] << "  (" << a.log.size() << " Befehle)" << std::endl;
+    if (!same) {{
+      fails++;
+      size_t n = std::max(a.log.size(), b.log.size());
+      for (size_t k = 0, shown = 0; k < n && shown < 6; k++) {{
+        std::string x = k < a.log.size() ? a.log[k] : "(fehlt)", y = k < b.log.size() ? b.log[k] : "(fehlt)";
+        if (x != y) {{ std::cout << "   #" << k << " alt: " << x << "\\n      neu: " << y << std::endl; shown++; }}
+      }}
+    }}
+  }}
+  return fails ? 1 : 0;
+}}
+"""
+out = os.path.join(here, "build", "compare.cpp")
+os.makedirs(os.path.dirname(out), exist_ok=True)
+open(out, "w").write(src)
+print(out)

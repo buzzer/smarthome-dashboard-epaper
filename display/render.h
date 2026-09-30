@@ -1,0 +1,458 @@
+#pragma once
+// Zeichnen der Hausanzeige (800 x 480): Layout A Tagesübersicht, Layout B Abwesend.
+// Als Template, damit derselbe Code auf dem ESP32 und im PC-Vergleichstest läuft.
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+#include "model.h"
+
+namespace dash {
+
+using esphome::Color;
+using esphome::display::BaseFont;
+using esphome::display::COLOR_OFF;
+using esphome::display::COLOR_ON;
+using esphome::display::TextAlign;
+
+struct Fonts {
+  BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big;
+};
+
+// ---------- Formatierung ----------
+inline std::string de1(float v) {  // eine Nachkommastelle, Dezimalkomma
+  char b[16];
+  snprintf(b, sizeof(b), "%.1f", v);
+  for (char *p = b; *p; p++)
+    if (*p == '.') *p = ',';
+  return std::string(b);
+}
+inline std::string deg(int v) { return v == NA_T ? std::string("–") : esphome::to_string(v) + "°"; }
+inline std::string pct(int v) { return v == NA_H ? std::string("–") : esphome::to_string(v) + " %"; }
+inline std::string join(const std::vector<std::string> &v, const char *sep) {
+  std::string r;
+  for (const auto &s : v) {
+    if (!r.empty()) r += sep;
+    r += s;
+  }
+  return r;
+}
+inline std::string t_out_text(const Model &m) {  // Außentemperatur (OWM, ganze Grad aus Node-RED)
+  if (std::isnan(m.t_out)) return deg(NA_T);
+  if (fabsf(m.t_out - roundf(m.t_out)) < 0.05f) return esphome::to_string((int) roundf(m.t_out)) + "°";
+  return de1(m.t_out) + "°";
+}
+inline std::string power_text(const Model &m) {
+  if (m.power == NA_P) return "–";
+  if (m.power >= 1000) return de1(m.power / 1000.0f) + " kW";
+  return esphome::to_string(m.power) + " W";
+}
+inline const char *owm_icon(int id) {
+  if (id >= 200 && id < 300) return "\U000F0593";                  // Gewitter
+  if (id == 511 || (id >= 611 && id <= 616)) return "\U000F067F";  // Schneeregen
+  if (id >= 502 && id < 600) return "\U000F0596";                  // starker Regen
+  if (id >= 300 && id < 600) return "\U000F0597";                  // Regen
+  if (id >= 600 && id < 700) return "\U000F0598";                  // Schnee
+  if (id >= 700 && id < 800) return "\U000F0591";                  // Nebel
+  if (id == 800) return "\U000F0599";                              // sonnig
+  if (id == 801 || id == 802) return "\U000F0595";                 // teils bewölkt
+  return "\U000F0590";                                             // bewölkt
+}
+inline std::string shutter_text(int pos) {
+  if (pos < 0) return "–";
+  if (pos >= 100) return "offen";
+  if (pos <= 0) return "geschlossen";
+  return esphome::to_string(pos) + " % offen";
+}
+
+// ---------- Zeichnen ----------
+template<typename D> struct Painter {
+  D &it;
+  const Fonts &F;
+
+  int width_of(const std::string &s, BaseFont *f) {
+    int x1, y1, w, h;
+    it.get_text_bounds(0, 0, s.c_str(), f, TextAlign::BASELINE_LEFT, &x1, &y1, &w, &h);
+    return w;
+  }
+  std::string fit(const std::string &s, BaseFont *f, int max_w) {  // mit … kürzen
+    if (width_of(s, f) <= max_w) return s;
+    std::string t = s;
+    while (!t.empty() && width_of(t + "…", f) > max_w) {
+      t.pop_back();
+      while (!t.empty() && (t.back() & 0xC0) == 0x80) t.pop_back();  // keine halben UTF-8-Zeichen
+    }
+    return t + "…";
+  }
+  void check_mark(int x, int y, Color c) {  // Haken, y = Grundlinie
+    for (int d = 0; d < 3; d++) {
+      it.line(x, y - 8 + d, x + 5, y - 3 + d, c);
+      it.line(x + 5, y - 3 + d, x + 15, y - 16 + d, c);
+    }
+  }
+  void cross_mark(int x, int y, Color c) {
+    for (int d = 0; d < 3; d++) {
+      it.line(x + d, y - 15, x + 13 + d, y - 1, c);
+      it.line(x + 13 + d, y - 15, x + d, y - 1, c);
+    }
+  }
+};
+
+// gray = false: alles schwarz wie bisher; gray = true: Beschriftungen und Linien in zwei Grautönen
+template<typename D, typename T>
+void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = false) {
+  Painter<D> P{it, F};
+  const Color INK = COLOR_ON;
+  const Color PAPER = COLOR_OFF;
+  const Color DARK = gray ? Color(170, 170, 170, 170) : INK;  // Namen, Einheiten, Umrisse, Hinweisbalken
+  const Color LIGHT = gray ? Color(85, 85, 85, 85) : INK;     // Abschnittsbeschriftungen, Trennlinien
+  // Beschriftung dunkelgrau, Wert schwarz; schwarzweiß in einem Aufruf wie bisher
+  auto label_value = [&](int x, int y, BaseFont *f, const std::string &label, const std::string &value) {
+    if (!gray) {
+      it.print(x, y, f, TextAlign::BASELINE_LEFT, (label + value).c_str());
+      return;
+    }
+    it.print(x, y, f, DARK, TextAlign::BASELINE_LEFT, label.c_str());
+    it.print(x + P.width_of(label, f), y, f, INK, TextAlign::BASELINE_LEFT, value.c_str());
+  };
+  const auto &R = m.rooms;
+  const std::vector<std::string> &ct_names = m.ct_names;
+  const bool ct_known = m.ct_open != NA_H;
+  const bool ct_open = ct_known && m.ct_open > 0;
+
+  // --- Kopfzeile (beide Layouts) ---
+  static const char *const WD[] = {"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
+  static const char *const MO[] = {"Januar", "Februar", "März",     "April",   "Mai",      "Juni",
+                                   "Juli",   "August",  "September", "Oktober", "November", "Dezember"};
+  const bool away = m.away || m.holiday;
+  if (away) {
+    std::string head = m.holiday ? "Urlaub" : "Abwesend";
+    if (!m.since.empty()) head += " seit " + m.since;
+    it.print(16, 34, F.head, TextAlign::BASELINE_LEFT, head.c_str());
+  } else if (now.is_valid()) {
+    it.printf(16, 34, F.head, TextAlign::BASELINE_LEFT, "%s, %d. %s", WD[now.day_of_week - 1], now.day_of_month,
+              MO[now.month - 1]);
+  }
+  if (now.is_valid())
+    it.printf(784, 34, F.room, LIGHT, TextAlign::BASELINE_RIGHT, "Stand %02d:%02d", now.hour, now.minute);
+  it.filled_rectangle(16, 47, 768, 2, DARK);
+
+  // ===================== Layout B: Abwesend =====================
+  if (away) {
+    // Statuszeilen links: 0 = in Ordnung, 1 = Problem (invertiert), 2 = Hinweis
+    int y = 100;
+    auto row = [&](int state, const std::string &text, const std::string &sub) {
+      if (state == 1) {
+        it.filled_rectangle(16, y - 34, 488, 48);
+        P.cross_mark(30, y, PAPER);
+        it.print(58, y, F.head, PAPER, TextAlign::BASELINE_LEFT, P.fit(text, F.head, 436).c_str());
+      } else {
+        if (state == 0)
+          P.check_mark(28, y, DARK);
+        else
+          it.print(32, y, F.head, TextAlign::BASELINE_LEFT, "!");
+        it.print(58, y, F.head, state == 0 ? DARK : INK, TextAlign::BASELINE_LEFT, P.fit(text, F.head, 446).c_str());
+      }
+      if (!sub.empty()) {
+        y += 36;
+        it.print(58, y, F.text, DARK, TextAlign::BASELINE_LEFT, P.fit(sub, F.text, 446).c_str());
+      }
+      y += 52;
+    };
+
+    if (ct_known) {
+      if (ct_open)
+        row(1, esphome::to_string(m.ct_open) + (m.ct_open == 1 ? " Kontakt offen" : " Kontakte offen"),
+            join(ct_names, " · "));
+      else
+        row(0, "Alle Fenster und Türen zu", "");
+    }
+    if (!m.alarm.empty())
+      row(1, "Alarm " + m.alarm + " " + m.alarm_at, "");
+    else
+      row(0, "Kein Alarm", "");
+    if (ct_known) {
+      // zwei Garagentore: in der Garage und in der Werkstatt
+      bool ga_open = false, we_open = false;
+      for (const auto &k : ct_names) {
+        if (k == "GarageTor" || k == "GA-Tor") ga_open = true;
+        if (k == "WerkstattTor" || k == "WE-Tor") we_open = true;
+      }
+      if (ga_open && we_open)
+        row(1, "Beide Garagentore offen", "");
+      else if (ga_open)
+        row(1, "Garagentor Garage offen", "");
+      else if (we_open)
+        row(1, "Garagentor Werkstatt offen", "");
+      else
+        row(0, "Beide Garagentore zu", "");
+    }
+    if (m.car_valid && (m.car_windows >= 0 || m.car_lids >= 0)) {
+      if (m.car_windows == 0)
+        row(1, "Auto: Fenster offen", "");
+      else if (m.car_lids == 0)
+        row(1, "Auto: Türen oder Klappen offen", "");
+      else
+        row(0, "Auto: Fenster und Türen zu", "");
+    }
+    {
+      const Room *wet = nullptr;
+      for (const auto &r : R)
+        if (r.h != NA_H && (wet == nullptr || r.h > wet->h)) wet = &r;
+      if (wet != nullptr) {
+        if (wet->h >= 70)
+          row(2, std::string(wet->name) + " " + esphome::to_string(wet->h) + " % Feuchte", "");
+        else
+          row(0, "Feuchte höchstens " + esphome::to_string(wet->h) + " %", "");
+      }
+    }
+
+    // Rechte Spalte: Haus, Auto, Geräte
+    it.line(520, 66, 520, 464, LIGHT);
+    int ry = 84;
+    auto label = [&](const char *t) {
+      it.print(540, ry, F.label, LIGHT, TextAlign::BASELINE_LEFT, t);
+      ry += 32;
+    };
+    auto kv = [&](const char *k, const std::string &v) {
+      it.print(540, ry, F.room, DARK, TextAlign::BASELINE_LEFT, k);
+      it.print(784, ry, F.hint_b, TextAlign::BASELINE_RIGHT, v.c_str());
+      ry += 28;
+    };
+    label("HAUS");
+    {
+      const Room *lo = nullptr, *hi = nullptr;
+      for (const auto &r : R) {
+        if (r.t == NA_T) continue;
+        if (lo == nullptr || r.t < lo->t) lo = &r;
+        if (hi == nullptr || r.t > hi->t) hi = &r;
+      }
+      if (lo != nullptr) kv("Innen min", deg(lo->t) + " " + lo->abbr);
+      if (hi != nullptr) kv("Innen max", deg(hi->t) + " " + hi->abbr);
+    }
+    kv("Leistung", power_text(m));
+    if (!std::isnan(m.t_out)) kv("Außen", t_out_text(m));
+    ry += 18;
+    if (m.car_valid) {
+      label("AUTO");
+      if (m.car_range >= 0) kv("Reichweite", esphome::to_string(m.car_range) + " km");
+      if (m.car_service >= 0) kv("Service", m.car_service == 1 ? "fällig" : "nicht fällig");
+      if (!m.car_at.empty()) kv("Stand", m.car_at);
+      ry += 18;
+    }
+    label("GERÄTE");
+    kv("Batterie leer", esphome::to_string(m.batt.size()));
+    kv("Ohne Meldung", esphome::to_string(m.dead.size()));
+    std::vector<std::string> dev = m.batt;
+    dev.insert(dev.end(), m.dead.begin(), m.dead.end());
+    for (size_t i = 0; i < dev.size() && i < 2 && ry < 470; i++) {
+      it.print(540, ry, F.room, DARK, TextAlign::BASELINE_LEFT, P.fit(dev[i], F.room, 244).c_str());
+      ry += 22;
+    }
+    return;
+  }
+
+  // ===================== Layout A: Tagesübersicht =====================
+  // --- Heute ---
+  it.print(16, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "HEUTE");
+  const std::string t_out = t_out_text(m);
+  // Temperatur groß; das Symbol füllt den Platz bis zur Trennlinie (x = 296)
+  const int t_w_big = P.width_of(t_out, F.big);
+  const bool t_small = t_w_big > (m.icon >= 0 ? 226 : 276);
+  BaseFont *f_out = t_small ? F.kw : F.big;
+  it.print(12, 148, f_out, TextAlign::BASELINE_LEFT, t_out.c_str());
+  if (m.icon >= 0) {
+    const int free_l = 12 + P.width_of(t_out, f_out) + 10;  // linker Rand des freien Platzes
+    const int free_w = 292 - free_l;
+    if (free_w >= 96)
+      it.print(free_l + free_w / 2, 114, F.icon_big, DARK, TextAlign::CENTER, owm_icon(m.icon));
+    else
+      it.print(270, 120, F.icon, DARK, TextAlign::CENTER, owm_icon(m.icon));
+  }
+  {
+    int cx = 16;
+    std::string s;
+    it.filled_triangle(cx, 177, cx + 12, 177, cx + 6, 166, DARK);  // Maximum
+    cx += 16;
+    s = deg(m.t_hi);
+    it.print(cx, 178, F.text, TextAlign::BASELINE_LEFT, s.c_str());
+    cx += P.width_of(s, F.text) + 12;
+    it.filled_triangle(cx, 166, cx + 12, 166, cx + 6, 177, DARK);  // Minimum
+    cx += 16;
+    s = deg(m.t_lo);
+    it.print(cx, 178, F.text, TextAlign::BASELINE_LEFT, s.c_str());
+    cx += P.width_of(s, F.text) + 18;
+    s = pct(m.h_out);
+    it.print(cx, 178, F.text, DARK, TextAlign::BASELINE_LEFT, s.c_str());
+    cx += P.width_of(s, F.text) + 18;
+    if (m.bft >= 0) it.printf(cx, 178, F.text, DARK, TextAlign::BASELINE_LEFT, "Wind %d", m.bft);
+  }
+  it.print(16, 200, F.text, DARK, TextAlign::BASELINE_LEFT, P.fit(m.detail, F.text, 272).c_str());
+  it.line(296, 62, 296, 200, LIGHT);
+
+  // --- Leistung und Verbrauch ---
+  it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "LEISTUNG");
+  if (m.power != NA_P) {
+    std::string num, unit;
+    if (m.power >= 1000) {
+      num = de1(m.power / 1000.0f);
+      unit = " kW";
+    } else {
+      num = esphome::to_string(m.power);
+      unit = " W";
+    }
+    it.print(310, 140, F.kw, TextAlign::BASELINE_LEFT, num.c_str());
+    it.print(310 + P.width_of(num, F.kw), 140, F.head, DARK, TextAlign::BASELINE_LEFT, unit.c_str());
+  } else {
+    it.print(310, 140, F.kw, TextAlign::BASELINE_LEFT, "–");
+  }
+  if (!std::isnan(m.en_today)) label_value(314, 178, F.text, "Heute ", de1(m.en_today) + " kWh");
+  if (!std::isnan(m.en_yesterday)) label_value(314, 200, F.text, "Gestern ", de1(m.en_yesterday) + " kWh");
+  it.line(540, 62, 540, 200, LIGHT);
+
+  // --- Rechte Spalte: Kontextkachel, sonst Vorhersage ---
+  // Vorrang: laufender 3D-Druck, aktive Szene, Wartung
+  if (m.pr_active) {
+    it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "3D-DRUCK");
+    const int p = std::max(0, std::min(100, m.pr_progress));
+    it.printf(556, 122, F.tile, TextAlign::BASELINE_LEFT, "%d %%", p);
+    if (gray) it.filled_rectangle(558, 134, 222, 16, LIGHT);  // Rest hellgrau
+    it.rectangle(558, 134, 222, 16);
+    it.rectangle(559, 135, 220, 14);
+    it.filled_rectangle(558, 134, 222 * p / 100, 16);
+    if (m.pr_left >= 0)
+      it.printf(558, 176, F.text, DARK, TextAlign::BASELINE_LEFT, "noch %d:%02d h", m.pr_left / 3600,
+                (m.pr_left % 3600) / 60);
+    if (!std::isnan(m.pr_tool) && !std::isnan(m.pr_bed))
+      it.printf(558, 200, F.room, DARK, TextAlign::BASELINE_LEFT, "Düse %.0f° · Bett %.0f°", m.pr_tool, m.pr_bed);
+  } else if (!m.scene.empty()) {
+    it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "SZENE AKTIV");
+    it.print(556, 122, F.tile, TextAlign::BASELINE_LEFT, P.fit(m.scene, F.tile, 224).c_str());
+    if (!m.scene_since.empty())
+      it.printf(558, 158, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.scene_since.c_str());
+    const Room *r = nullptr;
+    if (m.scene == "Sauna")
+      r = &R[WK];
+    else if (m.scene == "Kamin")
+      r = &R[WZ];
+    if (r != nullptr)
+      it.printf(558, 184, F.text, DARK, TextAlign::BASELINE_LEFT, "%s %s %s", r->abbr, deg(r->t).c_str(), pct(r->h).c_str());
+  } else if (!m.batt.empty() || !m.dead.empty()) {
+    it.filled_rectangle(548, 56, 236, 26, DARK);
+    it.print(558, 74, F.label, PAPER, TextAlign::BASELINE_LEFT, "WARTUNG");
+    int wy = 106;
+    if (!m.batt.empty()) {
+      it.print(558, wy, F.hint_b, TextAlign::BASELINE_LEFT, "Batterie leer");
+      it.print(558, wy + 22, F.room, DARK, TextAlign::BASELINE_LEFT, P.fit(join(m.batt, ", "), F.room, 222).c_str());
+      wy += 54;
+    }
+    if (!m.dead.empty()) {
+      it.print(558, wy, F.hint_b, TextAlign::BASELINE_LEFT, "Ohne Meldung");
+      it.print(558, wy + 22, F.room, DARK, TextAlign::BASELINE_LEFT, P.fit(join(m.dead, ", "), F.room, 222).c_str());
+    }
+  } else {
+    it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "VORHERSAGE");
+    int shown = 0;
+    for (size_t i = 0; i < m.fc.size() && shown < 3; i++) {
+      const int cx = 596 + shown * 76;
+      it.print(cx, 102, F.room, DARK, TextAlign::BASELINE_CENTER, m.fc[i].n.c_str());
+      it.print(cx, 134, F.icon, DARK, TextAlign::CENTER, owm_icon(m.fc[i].i));
+      it.printf(cx, 184, F.fc, TextAlign::BASELINE_CENTER, "%d°", m.fc[i].hi);
+      it.printf(cx, 202, F.room, LIGHT, TextAlign::BASELINE_CENTER, "%d°", m.fc[i].lo);
+      shown++;
+    }
+    if (shown == 0) it.print(558, 110, F.room, DARK, TextAlign::BASELINE_LEFT, "noch keine Daten");
+  }
+
+  // --- Hinweisbalken: nur bei Handlungsbedarf ---
+  const std::string &attention = m.attention;
+  if (ct_open || !attention.empty()) {
+    it.filled_rectangle(16, 216, 768, 44, DARK);
+    int right_edge = 770;
+    if (!attention.empty()) {
+      const std::string a = P.fit(attention, F.hint, ct_open ? 360 : 740);
+      it.print(770, 245, F.hint, PAPER, TextAlign::BASELINE_RIGHT, a.c_str());
+      right_edge = 770 - P.width_of(a, F.hint) - 24;
+    }
+    if (ct_open) {
+      const std::string head = esphome::to_string(m.ct_open) + " offen";
+      it.print(30, 245, F.hint_b, PAPER, TextAlign::BASELINE_LEFT, head.c_str());
+      const int nx = 30 + P.width_of(head, F.hint_b) + 14;
+      std::string line;
+      for (size_t k = 0; k < ct_names.size(); k++) {
+        const std::string cand = line.empty() ? ct_names[k] : line + " · " + ct_names[k];
+        if (nx + P.width_of(cand + " +9", F.hint) > right_edge) {
+          line += " +" + esphome::to_string(ct_names.size() - k);
+          break;
+        }
+        line = cand;
+      }
+      it.print(nx, 245, F.hint, PAPER, TextAlign::BASELINE_LEFT, line.c_str());
+    }
+  } else if (ct_known) {
+    it.print(16, 245, F.text, DARK, TextAlign::BASELINE_LEFT, "Alle Fenster und Türen zu");
+  }
+
+  // --- Hausquerschnitt nach Ebenen (z2m/0..3) ---
+  it.line(16, 318, 400, 274, DARK);
+  it.line(16, 319, 400, 275, DARK);
+  it.line(400, 274, 784, 318, DARK);
+  it.line(400, 275, 784, 319, DARK);
+  it.rectangle(16, 318, 768, 150, DARK);
+  it.rectangle(17, 319, 766, 148, DARK);
+  // Innenlinien hellgrau; in Graustufen innerhalb des doppelten Umrisses, damit er nicht unterbrochen wird
+  const int inset = gray ? 2 : 0;
+  it.line(16 + inset, 368, 783 - inset, 368, LIGHT);
+  it.line(16 + inset, 418, 783 - inset, 418, LIGHT);
+  it.line(400, 318 + inset, 400, 368, LIGHT);
+  it.line(272, 418, 272, 468 - 2 * inset, LIGHT);
+  it.line(528, 418, 528, 468 - 2 * inset, LIGHT);
+
+  // Raum: [Ebene] Name  Temperatur  Feuchte; gibt die Breite zurück, zeichnet nur mit draw = true
+  auto room = [&](int x, int y, const char *floor, const Room &r, bool draw) -> int {
+    int cx = x;
+    if (floor != nullptr) {
+      if (draw) it.print(cx, y, F.label, LIGHT, TextAlign::BASELINE_LEFT, floor);
+      cx += P.width_of(floor, F.label) + 6;
+    }
+    if (draw) it.print(cx, y, F.room, DARK, TextAlign::BASELINE_LEFT, r.name);
+    cx += P.width_of(r.name, F.room) + 10;
+    const std::string v = deg(r.t) + "  " + pct(r.h);
+    if (draw) it.print(cx, y, F.value, TextAlign::BASELINE_LEFT, v.c_str());
+    return cx + P.width_of(v, F.value) - x;
+  };
+  {
+    const int w = room(0, 0, "3", R[DB], false);
+    room(400 - w / 2, 310, "3", R[DB], true);
+  }
+  room(30, 350, "2", R[KZ], true);
+  room(414, 350, nullptr, R[SZ], true);
+  room(30, 400, "1", R[WZ], true);
+
+  // Rollläden Wohnzimmer: Panzer wird proportional zur Position heruntergezogen
+  auto shutter = [&](int x, int y, int w, int h, int pos, bool door) {
+    it.filled_rectangle(x - 3, y - 4, w + 6, 4, DARK);  // Rollladenkasten
+    it.rectangle(x, y, w, h, DARK);
+    if (door) {
+      it.filled_rectangle(x + w - 7, y + h / 2, 3, 6, DARK);  // Griff
+    } else {  // Fensterkreuz hellgrau, in Graustufen ohne den Rahmen zu überdecken
+      const int gap = gray ? 1 : 0;
+      it.line(x + w / 2, y + gap, x + w / 2, y + h - 1 - gap, LIGHT);
+      it.line(x + gap, y + h / 2, x + w - 1 - gap, y + h / 2, LIGHT);
+    }
+    if (pos < 0) return;
+    const int closed = (100 - std::max(0, std::min(100, pos))) * (h - 2) / 100;
+    if (closed <= 0) return;
+    it.filled_rectangle(x + 1, y + 1, w - 2, closed, DARK);
+    for (int ly = y + 4; ly < y + 1 + closed; ly += 4) it.line(x + 2, ly, x + w - 3, ly, PAPER);  // Lamellen
+  };
+  shutter(330, 374, 22, 38, m.roll_tu, true);
+  label_value(364, 400, F.room, "Tür ", shutter_text(m.roll_tu));
+  shutter(530, 378, 34, 30, m.roll_fe, false);
+  label_value(576, 400, F.room, "Fenster ", shutter_text(m.roll_fe));
+  room(30, 450, "0", R[WK], true);
+  room(286, 450, nullptr, R[GA], true);
+  room(542, 450, nullptr, R[WE], true);
+}
+
+}  // namespace dash

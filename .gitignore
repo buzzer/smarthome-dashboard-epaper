@@ -1,0 +1,13 @@
+# Gitignore settings for ESPHome
+# This is an example and may include too much for your use-case.
+# You can modify this file to suit your needs.
+/.esphome/
+/secrets.yaml
+/nodered-backup/
+/test/build/
+__pycache__/
+# Microsoft Verdana darf nicht weitergegeben werden, siehe README
+/Fonts/Verdana*.ttf
+# Fremde Vorlagen ohne Lizenz zur Weitergabe
+/weatherman.yaml
+/epd7in5_V2_demo_copy_*/

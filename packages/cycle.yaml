@@ -1,0 +1,90 @@
+# Tiefschlaf-Zyklus: verbinden, Modell empfangen, nur bei Änderung zeichnen, nach Weckplan schlafen
+globals:
+  - id: g_t_wifi                # ms seit Start bis WLAN verbunden
+    type: uint32_t
+    initial_value: '0'
+  - id: g_t_mqtt                # ms seit Start bis MQTT verbunden
+    type: uint32_t
+    initial_value: '0'
+  - id: g_maint                 # Wartungsmodus aktiv
+    type: bool
+    initial_value: 'false'
+  - id: g_graytest              # Graustufen-Testbild: 0 aus, 1 Werkskurve ("otp"), 2 eigene Kurven ("lut")
+    type: int
+    initial_value: '0'
+  - id: g_need_draw
+    type: bool
+    initial_value: 'false'
+  - id: g_sleep_s               # berechnete Schlafdauer in Sekunden
+    type: uint32_t
+    initial_value: '600'
+
+# wird nur über wake_cycle ausgelöst, nie automatisch
+deep_sleep:
+  id: deep_sleep_ctrl
+
+script:
+  - id: wake_cycle
+    mode: single
+    then:
+      - wait_until:
+          condition:
+            mqtt.connected:
+          timeout: 20s
+      - wait_until:
+          condition:
+            lambda: 'return dash::M.valid;'
+          timeout: 5s
+      # restliche gespeicherte Nachrichten (z. B. Wartung)
+      - delay: 1s
+      - wait_until:
+          condition:
+            lambda: 'return id(sntp_time).now().is_valid();'
+          timeout: 5s
+      # Wartungsmodus: wach bleiben und jede Minute zeichnen, bis "Wartung aus" kommt
+      - while:
+          condition:
+            lambda: 'return id(g_maint);'
+          then:
+            - component.update: eink_display
+            - delay: 60s
+      - lambda: |-
+          if (!dash::M.valid) {
+            // keine Daten (WLAN oder Broker weg): altes Bild stehen lassen
+            id(g_need_draw) = false;
+            ESP_LOGW("cycle", "Keine Werte empfangen, Bild bleibt");
+            return;
+          }
+          auto now = id(sntp_time).now();
+          const int today = now.is_valid() ? now.year * 10000 + now.month * 100 + now.day_of_month : 0;
+          const auto r = dash::changes(dash::M, today);
+          id(g_need_draw) = r.redraw;
+          ESP_LOGI("cycle", "WLAN nach %u ms, MQTT nach %u ms, Werte da nach %u ms",
+                   (unsigned) id(g_t_wifi), (unsigned) id(g_t_mqtt), (unsigned) millis());
+          ESP_LOGI("cycle", "%s", r.redraw ? "neu zeichnen" : "unverändert, kein Bildaufbau");
+          if (!r.changed.empty()) ESP_LOGI("cycle", "Geändert: %s", r.changed.c_str());
+          if (!r.tolerance.empty()) ESP_LOGI("cycle", "Toleranz überschritten: %s", r.tolerance.c_str());
+      - if:
+          condition:
+            lambda: 'return id(g_need_draw);'
+          then:
+            - component.update: eink_display
+      # Schlafdauer nach Weckplan
+      - lambda: |-
+          const auto &m = dash::M;
+          int mins = ${wake_home_min};                                   // anwesend
+          if (m.away || m.holiday) mins = ${wake_away_min};              // abwesend, Urlaub
+          if (m.pr_active || !m.scene.empty()) mins = ${wake_active_min};  // Druck oder Szene läuft
+          uint32_t secs = mins * 60;
+          auto now = id(sntp_time).now();
+          if (now.is_valid() && !m.pr_active) {
+            const int t = now.hour * 3600 + now.minute * 60 + now.second;
+            if (now.hour >= ${night_from}) secs = 24 * 3600 - t + ${night_to} * 3600;  // Nachtpause
+            else if (now.hour < ${night_to}) secs = ${night_to} * 3600 - t;
+          }
+          if (secs < 60) secs = 60;
+          id(g_sleep_s) = secs;
+          ESP_LOGI("cycle", "Schlafe %u s (wach seit %u ms)", (unsigned) secs, (unsigned) millis());
+      - deep_sleep.enter:
+          id: deep_sleep_ctrl
+          sleep_duration: !lambda 'return id(g_sleep_s) * 1000;'

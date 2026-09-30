@@ -1,0 +1,100 @@
+# WLAN, MQTT, OTA, Uhrzeit, Logging
+logger:
+
+ota:
+  - platform: esphome
+    password: !secret home_dashboard_ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  # Schnell verbinden: kein Netzscan, keine DHCP-Anfrage
+  fast_connect: true
+  manual_ip:
+    static_ip: ${static_ip}
+    gateway: ${gateway}
+    subnet: 255.255.255.0
+    dns1: ${gateway}
+  on_connect:
+    - lambda: 'id(g_t_wifi) = millis();'
+    # sofort mit MQTT verbinden; beim normalen Start wartet der Client fest 5 s
+    - mqtt.enable:
+
+mqtt:
+  broker: ${broker}
+  topic_prefix: esphome
+  # Ohne native API laufen die Logs über MQTT (ab INFO)
+  log_topic:
+    topic: esphome/${name}/log
+    level: INFO
+    retain: false   # sonst liefert ein neuer Abonnent die letzte, alte Zeile als erstes
+  discovery: false
+  enable_on_boot: false   # wird in wifi.on_connect eingeschaltet
+  idf_send_async: true    # blockiert die Hauptschleife nicht, kostet etwas RAM
+  reboot_timeout: 5min
+  birth_message:
+    topic: birth_message
+    payload: 'esphome connected'
+    qos: 0
+    retain: true
+  will_message:
+    topic: will_message
+    payload: 'esphome disconnected'
+    qos: 0
+    retain: true
+  shutdown_message:
+    topic: shutdown_message
+    payload: 'esphome shutting down'
+    qos: 0
+    retain: true
+  on_connect:
+    - lambda: 'id(g_t_mqtt) = millis();'
+  on_message:
+    # Wartungsmodus aus Node-RED ("Wartung an"/"Wartung aus", retain): wach bleiben für OTA
+    - topic: esphome/maintenance
+      then:
+        - lambda: 'id(g_maint) = (x == "on" || x == "1" || x == "true");'
+        - if:
+            condition:
+              lambda: 'return id(g_maint);'
+            then:
+              - deep_sleep.prevent: deep_sleep_ctrl
+              - logger.log:
+                  level: INFO
+                  format: "Wartungsmodus an: bleibe wach"
+            else:
+              - deep_sleep.allow: deep_sleep_ctrl
+    # Graustufen-Testbild (nur im Wartungsmodus sichtbar)
+    - topic: esphome/graytest
+      then:
+        - lambda: 'id(g_graytest) = x == "lut" ? 2 : ((x == "otp" || x == "on") ? 1 : 0);'
+  on_json_message:
+    # Alles für das Display aus Node-RED ("Display-Modell", esphome/display, v1)
+    - topic: esphome/display
+      then:
+        - lambda: |-
+            if (!dash::parse_model(x, dash::M)) {
+              ESP_LOGW("display", "Unbekannte Modellversion");
+              return;
+            }
+            ESP_LOGD("mqtt_in", "Modell: Leistung %d W, %d offen, Vorhersage %d",
+                     dash::M.power, dash::M.ct_open, (int) dash::M.fc.size());
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Berlin
+    servers:
+      - ${gateway}
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+
+# Grund des letzten Neustarts (per MQTT mit retain)
+debug:
+  update_interval: never
+
+text_sensor:
+  - platform: debug
+    reset_reason:
+      id: reset_reason
+      name: "Reset Reason"
