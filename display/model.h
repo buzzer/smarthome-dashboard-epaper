@@ -29,6 +29,8 @@ struct Day {
   int i = 0;      // OWM weather ID
   int hi = 0;
   int lo = 0;
+  int gbft = -1;       // strongest gust of the day in Beaufort, -1 unknown
+  bool windy = false;  // set by apply_wind()
 };
 
 struct Model {
@@ -42,6 +44,8 @@ struct Model {
   int t_hi = NA_T, t_lo = NA_T;
   int h_out = NA_H;
   int bft = -1;   // Beaufort, -1 unknown
+  int gbft = -1;  // gusts in Beaufort, -1 unknown
+  bool windy = false;  // set by apply_wind()
   int icon = -1;  // OWM weather ID for "Heute" (today), -1 none
   std::string detail;
   std::vector<Day> fc;  // the next days (at most 3 are shown)

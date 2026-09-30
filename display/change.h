@@ -58,10 +58,10 @@ inline ChangeResult changes(const Model &m, int today) {
   if (!std::isnan(m.en_yesterday)) addi(lroundf(m.en_yesterday * 10));
   section("energy yesterday");
   addi(std::isnan(m.t_out) ? NA_T : (int) lroundf(m.t_out * 10));
-  addi(m.t_hi); addi(m.t_lo); addi(m.bft); addi(m.icon);
+  addi(m.t_hi); addi(m.t_lo); addi(m.bft); addi(m.icon); addi(m.windy);
   add(m.detail);
   section("weather");
-  for (const auto &d : m.fc) { add(d.n); addi(d.i); addi(d.hi); addi(d.lo); }
+  for (const auto &d : m.fc) { add(d.n); addi(d.i); addi(d.hi); addi(d.lo); addi(d.windy); }
   section("forecast");
   addi(m.ct_open);
   for (const auto &n : m.ct_names) add(n);

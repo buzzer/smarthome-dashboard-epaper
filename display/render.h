@@ -48,7 +48,9 @@ inline std::string power_text(const Model &m) {
   if (m.power >= 1000) return de1(m.power / 1000.0f) + " kW";
   return esphome::to_string(m.power) + " W";
 }
-inline const char *owm_icon(int id) {
+inline const char *owm_icon(int id, bool windy = false) {
+  if (windy && id == 800) return "\U000F059D";                     // windy, clear sky
+  if (windy && id > 800 && id <= 804) return "\U000F059E";         // windy, cloudy
   if (id >= 200 && id < 300) return "\U000F0593";                  // thunderstorm
   if (id == 511 || (id >= 611 && id <= 616)) return "\U000F067F";  // sleet
   if (id >= 502 && id < 600) return "\U000F0596";                  // heavy rain
@@ -266,9 +268,9 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     const int free_l = 12 + P.width_of(t_out, f_out) + 10;  // left edge of the free space
     const int free_w = 292 - free_l;
     if (free_w >= 96)
-      it.print(free_l + free_w / 2, 114, F.icon_big, DARK, TextAlign::CENTER, owm_icon(m.icon));
+      it.print(free_l + free_w / 2, 114, F.icon_big, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy));
     else
-      it.print(270, 120, F.icon, DARK, TextAlign::CENTER, owm_icon(m.icon));
+      it.print(270, 120, F.icon, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy));
   }
   {
     int cx = 16;
@@ -357,7 +359,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     for (size_t i = 0; i < m.fc.size() && shown < 3; i++) {
       const int cx = 596 + shown * 76;
       it.print(cx, 102, F.room, DARK, TextAlign::BASELINE_CENTER, m.fc[i].n.c_str());
-      it.print(cx, 134, F.icon, DARK, TextAlign::CENTER, owm_icon(m.fc[i].i));
+      it.print(cx, 134, F.icon, DARK, TextAlign::CENTER, owm_icon(m.fc[i].i, m.fc[i].windy));
       it.printf(cx, 184, F.fc, TextAlign::BASELINE_CENTER, "%d°", m.fc[i].hi);
       it.printf(cx, 202, F.room, LIGHT, TextAlign::BASELINE_CENTER, "%d°", m.fc[i].lo);
       shown++;

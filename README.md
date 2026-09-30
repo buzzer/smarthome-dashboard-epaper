@@ -64,6 +64,7 @@ From `test/`, with ArduinoJson from the ESPHome build directory:
 ```
 AJ=../.esphome/build/home-dashboard-1/managed_components/bblanchon__arduinojson/src
 g++ -std=gnu++20 -I mock -I $AJ -o build/test_change test_change.cpp && ./build/test_change
+g++ -std=gnu++20 -I mock -I $AJ -o build/test_wind test_wind.cpp && ./build/test_wind
 python3 build_compare.py <git-rev> scenarios
 g++ -std=gnu++20 -I mock -I $AJ -o build/compare build/compare.cpp && ./build/compare scenarios/*.json
 ```

@@ -29,6 +29,7 @@ esphome:
     - display/parse.h
     - display/rtc_state.h
     - display/change.h
+    - display/wind.h
     - display/render.h
   on_boot:
     priority: -100

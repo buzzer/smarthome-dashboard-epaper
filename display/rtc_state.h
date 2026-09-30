@@ -11,3 +11,9 @@ RTC_DATA_ATTR static uint32_t rtc_part_hash[16] = {0};
 // Last drawn values for tolerance checks (power, energy, humidities).
 RTC_DATA_ATTR static bool rtc_drawn_valid = false;
 RTC_DATA_ATTR static int32_t rtc_drawn[12] = {0};
+
+// Wind icon state per day (display/wind.h): key = hash of the day, bit i of rtc_windy_on = windy.
+static constexpr int RTC_WINDY_SLOTS = 8;
+RTC_DATA_ATTR static uint32_t rtc_windy_key[RTC_WINDY_SLOTS] = {0};
+RTC_DATA_ATTR static uint8_t rtc_windy_on = 0;
+RTC_DATA_ATTR static uint8_t rtc_windy_n = 0;

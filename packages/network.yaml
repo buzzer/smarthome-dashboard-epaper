@@ -73,6 +73,7 @@ mqtt:
               ESP_LOGW("display", "Unknown model version");
               return;
             }
+            dash::apply_wind(dash::M);
             ESP_LOGD("mqtt_in", "Model: power %d W, %d open, forecast %d",
                      dash::M.power, dash::M.ct_open, (int) dash::M.fc.size());
 
