@@ -82,6 +82,7 @@ script:
           if (secs < 60) secs = 60;
           id(g_sleep_s) = secs;
           ESP_LOGI("cycle", "Sleeping %u s (awake for %u ms)", (unsigned) secs, (unsigned) millis());
+      - switch.turn_off: epd_power
       - deep_sleep.enter:
           id: deep_sleep_ctrl
           sleep_duration: !lambda 'return id(g_sleep_s) * 1000;'

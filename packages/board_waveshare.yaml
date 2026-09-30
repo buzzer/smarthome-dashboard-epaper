@@ -11,3 +11,14 @@ esp32:
 spi:
   clk_pin: GPIO13
   mosi_pin: GPIO14
+
+# Display supply (Q31/Q32 -> RT9193 -> EPD_3.3V). On a stock board R19 keeps it on permanently and IO4
+# is not connected (R35 not fitted), so this switch has no effect. After the low-power modification
+# (R19 moved to the empty R35 position) IO4 switches the display supply: on at boot before the display is set up,
+# off right before deep sleep (see packages/cycle.yaml); in deep sleep R34 keeps it off.
+switch:
+  - platform: gpio
+    id: epd_power
+    pin: GPIO4
+    restore_mode: ALWAYS_ON
+    internal: true

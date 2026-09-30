@@ -39,6 +39,22 @@ replaces the forecast:
 
 <img src="docs/layout-a-bw.svg" alt="Layout A in black and white" width="400">
 
+## Low-power modification
+
+On the Waveshare driver board (Rev 3) the display supply (Q31, Q32, regulator RT9193) is switched on
+permanently through R19. The board already has a footprint to let the ESP32 switch it instead, which
+lowered the deep-sleep current from 511 µA to 216 µA (measured at 3.25 V on the 3.3 V pin, PWR LED
+already disabled):
+
+1. Remove R19 (10 kΩ, on the back next to Q31/Q32).
+2. Solder it onto the empty pads of R35 directly below. R35 is the base resistor between IO4 and Q32;
+   do not bridge it with solder, the GPIO would then drive the transistor base without current limit.
+
+The firmware drives IO4 (`epd_power` in `packages/board_waveshare.yaml`): on at boot before the display
+is set up, off right before deep sleep. On an unmodified board IO4 is not connected, so the same
+firmware runs on both. Flash it before doing the modification, otherwise the display gets no power.
+Removing the PWR LED (or cutting its trace) saves another 0.5–1 mA.
+
 ## Language
 
 Code, comments and logs are in English. The texts shown on the display are German on purpose
