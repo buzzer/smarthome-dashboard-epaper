@@ -2,14 +2,23 @@
 """Vergleichstest alt/neu: zieht Parser- und Zeichencode aus einer YAML-Version (git) und
 erzeugt ein C++-Programm, das alten und neuen Code mit denselben JSON-Szenarien laufen lässt.
 
-Aufruf: build_compare.py <git-rev> <szenario-verzeichnis>
-"""
-import os, re, subprocess, sys
+Aufruf: build_compare.py [--repo <git-verzeichnis>] <git-rev> <szenario-verzeichnis>
 
-rev, scen_dir = sys.argv[1], sys.argv[2]
+--repo: Repository, aus dem <git-rev> gelesen wird (Standard: dieses Projekt). Die Stände vor dem
+Neuanlegen des Repos (z. B. 21aee59, letzter Stand vor dem Umbau auf C++) liegen in einem lokalen
+Sicherungs-Repo, etwa --repo ../epaper-history-private.git
+"""
+import argparse, os, re, subprocess
+
 here = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(here)
-yaml = subprocess.check_output(["git", "-C", root, "show", f"{rev}:HomeDashboard1.yaml"], text=True)
+ap = argparse.ArgumentParser()
+ap.add_argument("--repo", default=root)
+ap.add_argument("rev")
+ap.add_argument("scen_dir")
+args = ap.parse_args()
+rev, scen_dir = args.rev, args.scen_dir
+yaml = subprocess.check_output(["git", "-C", args.repo, "show", f"{rev}:HomeDashboard1.yaml"], text=True)
 lines = yaml.split("\n")
 
 
