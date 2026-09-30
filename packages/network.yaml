@@ -16,7 +16,9 @@ wifi:
     subnet: 255.255.255.0
     dns1: ${gateway}
   on_connect:
-    - lambda: 'id(g_t_wifi) = millis();'
+    - lambda: |-
+        id(g_t_wifi) = millis();
+        dash::sntp_restart();  // first time request now, not after the lwIP retry timeout
     # connect MQTT right away; on a normal start the client waits a fixed 5 s
     - mqtt.enable:
 

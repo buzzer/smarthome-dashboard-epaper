@@ -69,6 +69,10 @@ struct Model {
 
   int roll_fe = -1, roll_tu = -1;  // living room shutters, % open
 
+  float vbat = NAN;         // battery voltage (packages/battery.yaml), NAN without measurement
+  bool batt_low = false;    // hint "Akku schwach"
+  bool batt_empty = false;  // draw "Akku leer" and sleep without WiFi
+
   bool pr_active = false;
   int pr_progress = 0, pr_left = -1;
   float pr_tool = NAN, pr_bed = NAN;

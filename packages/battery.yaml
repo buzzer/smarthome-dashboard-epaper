@@ -1,0 +1,51 @@
+# Battery voltage on GPIO33, wired directly to the 3.3 V supply (the LiFePO4 cell feeds the 3.3 V pin).
+# Measured once per wake-up before WiFi starts; WiFi is enabled only afterwards (see network.yaml).
+# Remove this package if GPIO33 is not wired: a floating input would report random voltages.
+substitutions:
+  batt_low_v: "3.05"      # below: hint "Akku schwach" on the display
+  batt_ok_v: "3.10"       # above: hint off again (hysteresis against measurement noise)
+  batt_empty_v: "2.90"    # below: draw "Akku leer" once, then sleep without WiFi to protect the cell
+  batt_empty_sleep_h: "6"
+
+esphome:
+  includes:
+    - display/battery.h
+  on_boot:
+    - priority: 200  # after WiFi setup (still disabled), before anything is sent
+      then:
+        - lambda: |-
+            id(vbat).update();
+            dash::apply_battery(dash::M, id(vbat).state, ${batt_low_v}, ${batt_ok_v}, ${batt_empty_v});
+            ESP_LOGI("battery", "%.3f V%s", dash::M.vbat,
+                     dash::M.batt_empty ? " - empty" : (dash::M.batt_low ? " - low" : ""));
+        - if:
+            condition:
+              lambda: 'return dash::M.batt_empty;'
+            then:
+              - if:
+                  condition:
+                    lambda: 'return !rtc_empty_drawn;'
+                  then:
+                    - component.update: eink_display
+                    - lambda: 'rtc_empty_drawn = true;'
+              - switch.turn_off: epd_power
+              - deep_sleep.enter:
+                  id: deep_sleep_ctrl
+                  sleep_duration: ${batt_empty_sleep_h}h
+            else:
+              - lambda: 'rtc_empty_drawn = false;'
+              - wifi.enable:
+
+wifi:
+  enable_on_boot: false  # started above after the measurement
+
+sensor:
+  - platform: adc
+    id: vbat
+    name: battery
+    pin: GPIO33
+    attenuation: 12db  # reads up to about 3.1 V; a LiFePO4 cell only drops below that when nearly empty
+    samples: 16
+    update_interval: never
+    accuracy_decimals: 3
+    state_topic: esphome/${name}/battery

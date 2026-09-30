@@ -11,6 +11,13 @@ substitutions:
   wake_active_min: "5"
   night_from: "23"
   night_to: "6"
+  # Battery thresholds without a voltage divider on GPIO33 (interim, measured on this board): the ADC then
+  # reads the supply it runs from, saturates at ~3.13 and below ~2.9 V reads ~0.4 V too high.
+  # 3.12 = ~2.86 V, 3.07 = ~2.75 V real. With a 1:2 divider remove these three lines; the defaults in
+  # packages/battery.yaml (3.05 / 3.10 / 2.90 V) then apply to the real voltage.
+  batt_low_v: "3.12"
+  batt_ok_v: "3.125"
+  batt_empty_v: "3.07"
 
 packages:
   board: !include packages/board_waveshare.yaml
@@ -20,18 +27,26 @@ packages:
   display: !include packages/display_gray.yaml
   network: !include packages/network.yaml
   fonts: !include packages/fonts.yaml
+  # battery voltage on GPIO33; remove if GPIO33 is not wired to the supply
+  battery: !include packages/battery.yaml
   cycle: !include packages/cycle.yaml
 
 esphome:
   name: ${name}
   includes:
+    - system/sntp.h
     - display/model.h
     - display/parse.h
     - display/rtc_state.h
     - display/change.h
     - display/wind.h
     - display/render.h
+  # a list, so that packages can add their own on_boot entries (packages/battery.yaml)
   on_boot:
-    priority: -100
-    then:
-      - script.execute: wake_cycle
+    - priority: -100
+      then:
+        - if:
+            condition:
+              lambda: 'return !dash::M.batt_empty;'
+            then:
+              - script.execute: wake_cycle

@@ -22,7 +22,7 @@ replaces the forecast:
 <img src="docs/tile-print.svg" alt="Tile: 3D print" width="244"> <img src="docs/tile-scene.svg" alt="Tile: active scene" width="244"> <img src="docs/tile-maintenance.svg" alt="Tile: maintenance" width="244">
 
 - `HomeDashboard1.yaml`: main file with the settings (substitutions)
-- `packages/`: board, display driver, network/MQTT, fonts, wake and sleep cycle
+- `packages/`: board, display driver, network/MQTT, fonts, battery, wake and sleep cycle
 - `display/`: data model, JSON parser, rendering (layout A daily overview, layout B away), change detection
 - `components/epaper_gray/`: driver extension for 4 gray levels (GPL-3.0, see `NOTICE.md` there)
 - `test/`: PC tests for rendering and change detection, using a mock of the ESPHome display API
@@ -64,6 +64,22 @@ Estimated battery life with the 10-minute wake interval and the night pause (awa
 | LiFePO4 700 mAh | ~5 weeks | ~8 weeks |
 | LiFePO4 1800 mAh | ~3 months | ~5 months |
 | LiFePO4 2000 mAh | ~3.5 months | ~5.5 months |
+
+## Battery monitoring
+
+`packages/battery.yaml` measures the supply voltage on GPIO33, which is wired directly to the 3.3 V pin
+fed by a LiFePO4 cell. The measurement runs once per wake-up before WiFi starts:
+
+- The voltage is published retained on `esphome/<name>/battery`.
+- Below 3.05 V the display shows "Akku schwach" in the hint bar (off again above 3.10 V).
+- Below 2.90 V it draws "Akku leer – bitte laden" once and then sleeps for 6 hours without WiFi, to
+  protect the cell from deep discharge; it checks again after each period.
+
+GPIO33 needs a 1:2 voltage divider (for example 2 × 470 kΩ plus 100 nF to GND at the pin): wired
+directly to the supply it runs from, the ADC saturates at ~3.13 and reads ~0.4 V too high below ~2.9 V.
+Until the divider is fitted, `HomeDashboard1.yaml` overrides the thresholds with values measured on this
+board (3.12 ≈ 2.86 V, 3.07 ≈ 2.75 V). Readings below 2.5 V (pin not connected, powered via USB) are
+ignored. Remove the package if GPIO33 is not wired.
 
 ## Language
 
@@ -154,6 +170,7 @@ From `test/`, with ArduinoJson from the ESPHome build directory:
 AJ=../.esphome/build/home-dashboard-1/managed_components/bblanchon__arduinojson/src
 g++ -std=gnu++20 -I mock -I $AJ -o build/test_change test_change.cpp && ./build/test_change
 g++ -std=gnu++20 -I mock -I $AJ -o build/test_wind test_wind.cpp && ./build/test_wind
+g++ -std=gnu++20 -I mock -I $AJ -o build/test_battery test_battery.cpp && ./build/test_battery
 python3 build_compare.py <git-rev> scenarios
 g++ -std=gnu++20 -I mock -I $AJ -o build/compare build/compare.cpp && ./build/compare scenarios/*.json
 ```

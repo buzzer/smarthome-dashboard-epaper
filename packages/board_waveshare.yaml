@@ -7,6 +7,9 @@ esp32:
     sdkconfig_options:
       # A full e-paper refresh blocks the main loop for several seconds
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
+      # ESP-IDF waits a random 0-5 s before the first SNTP request; after a cold boot the time was then
+      # sometimes not valid yet when drawing (no date, no "Stand"). Deep sleep keeps the time anyway.
+      CONFIG_LWIP_SNTP_STARTUP_DELAY: "n"
 
 spi:
   clk_pin: GPIO13

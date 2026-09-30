@@ -163,6 +163,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       y += 52;
     };
 
+    if (m.batt_low) row(2, "Akku schwach", "");
     if (ct_known) {
       if (ct_open)
         row(1, esphome::to_string(m.ct_open) + (m.ct_open == 1 ? " Kontakt offen" : " Kontakte offen"),
@@ -368,7 +369,8 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   }
 
   // --- Hint bar: only when action is needed ---
-  const std::string &attention = m.attention;
+  const std::string attention =
+      !m.batt_low ? m.attention : (m.attention.empty() ? std::string("Akku schwach") : "Akku schwach · " + m.attention);
   if (ct_open || !attention.empty()) {
     it.filled_rectangle(16, 216, 768, 44, DARK);
     int right_edge = 770;

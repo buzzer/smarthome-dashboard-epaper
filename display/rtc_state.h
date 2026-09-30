@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "esp_attr.h"
 
 // Lives in RTC memory: survives deep sleep, but not a power loss.
@@ -17,3 +18,7 @@ static constexpr int RTC_WINDY_SLOTS = 8;
 RTC_DATA_ATTR static uint32_t rtc_windy_key[RTC_WINDY_SLOTS] = {0};
 RTC_DATA_ATTR static uint8_t rtc_windy_on = 0;
 RTC_DATA_ATTR static uint8_t rtc_windy_n = 0;
+
+// Battery state (display/battery.h): hysteresis of the low hint, "empty" screen already drawn.
+RTC_DATA_ATTR static bool rtc_batt_low = false;
+RTC_DATA_ATTR static bool rtc_empty_drawn = false;

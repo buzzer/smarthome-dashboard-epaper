@@ -66,6 +66,7 @@ inline ChangeResult changes(const Model &m, int today) {
   addi(m.ct_open);
   for (const auto &n : m.ct_names) add(n);
   add(m.attention);
+  addi(m.batt_low);
   section("contacts");
   add(m.alarm); add(m.alarm_at); add(m.scene); add(m.scene_since);
   for (const auto &b : m.batt) add(b);
