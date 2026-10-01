@@ -58,6 +58,11 @@ font:
     id: f_icon
     size: 40
     glyphs: ["\U000F0599", "\U000F0595", "\U000F0590", "\U000F0597", "\U000F0596", "\U000F0598", "\U000F067F", "\U000F0593", "\U000F0591", "\U000F059D", "\U000F059E"]
+  # small icons in the values row: umbrella (probability of precipitation), wind
+  - file: "Fonts/materialdesignicons.ttf"
+    id: f_icon_s
+    size: 16
+    glyphs: ["\U000F054A", "\U000F059D"]
   # large weather icon below "Heute" (today)
   - file: "Fonts/materialdesignicons.ttf"
     id: f_icon_big

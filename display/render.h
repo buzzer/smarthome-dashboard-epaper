@@ -17,7 +17,7 @@ using esphome::display::COLOR_ON;
 using esphome::display::TextAlign;
 
 struct Fonts {
-  BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big;
+  BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big, *icon_s;
 };
 
 // ---------- Formatting ----------
@@ -61,6 +61,8 @@ inline const char *owm_icon(int id, bool windy = false) {
   if (id == 801 || id == 802) return "\U000F0595";                 // partly cloudy
   return "\U000F0590";                                             // cloudy
 }
+static const char *const ICON_UMBRELLA = "\U000F054A";  // rain probability
+static const char *const ICON_WIND = "\U000F059D";      // wind force when "Wind 3" does not fit
 inline std::string shutter_text(int pos) {
   if (pos < 0) return "–";
   if (pos >= 100) return "offen";
@@ -236,6 +238,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     }
     kv("Leistung", power_text(m));
     if (!std::isnan(m.t_out)) kv("Außen", t_out_text(m));
+    if (pop_shown(m.pop) >= 0) kv("Regen heute", pct(m.pop));
     ry += 18;
     if (m.car_valid) {
       label("AUTO");
@@ -274,24 +277,45 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       it.print(270, 120, F.icon, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy));
   }
   {
+    // high (bold) and low (light) as in the forecast, humidity, rain, wind. Wind as "Wind 3" if it fits,
+    // otherwise as a small icon with the number, otherwise right in the description line
     int cx = 16;
-    std::string s;
-    it.filled_triangle(cx, 177, cx + 12, 177, cx + 6, 166, DARK);  // Maximum
-    cx += 16;
-    s = deg(m.t_hi);
-    it.print(cx, 178, F.text, TextAlign::BASELINE_LEFT, s.c_str());
-    cx += P.width_of(s, F.text) + 12;
-    it.filled_triangle(cx, 166, cx + 12, 166, cx + 6, 177, DARK);  // Minimum
-    cx += 16;
+    std::string s = deg(m.t_hi);
+    it.print(cx, 178, F.hint_b, TextAlign::BASELINE_LEFT, s.c_str());
+    cx += P.width_of(s, F.hint_b) + 7;
     s = deg(m.t_lo);
-    it.print(cx, 178, F.text, TextAlign::BASELINE_LEFT, s.c_str());
-    cx += P.width_of(s, F.text) + 18;
+    it.print(cx, 178, F.text, LIGHT, TextAlign::BASELINE_LEFT, s.c_str());
+    cx += P.width_of(s, F.text) + 14;
     s = pct(m.h_out);
     it.print(cx, 178, F.text, DARK, TextAlign::BASELINE_LEFT, s.c_str());
-    cx += P.width_of(s, F.text) + 18;
-    if (m.bft >= 0) it.printf(cx, 178, F.text, DARK, TextAlign::BASELINE_LEFT, "Wind %d", m.bft);
+    cx += P.width_of(s, F.text) + 14;
+    const int pop = pop_shown(m.pop);
+    if (pop >= 0) {
+      it.print(cx, 178, F.icon_s, TextAlign::BASELINE_LEFT, ICON_UMBRELLA);
+      cx += P.width_of(ICON_UMBRELLA, F.icon_s) + 2;
+      s = pct(pop);
+      it.print(cx, 178, F.text, TextAlign::BASELINE_LEFT, s.c_str());
+      cx += P.width_of(s, F.text) + 14;
+    }
+    int detail_w = 272;
+    if (m.bft >= 0) {
+      const std::string word = "Wind " + esphome::to_string(m.bft), num = esphome::to_string(m.bft);
+      const int w_icon = P.width_of(ICON_WIND, F.icon_s) + 2 + P.width_of(num, F.text);
+      auto wind_icon = [&](int right, int y) {
+        it.print(right - w_icon, y, F.icon_s, DARK, TextAlign::BASELINE_LEFT, ICON_WIND);
+        it.print(right, y, F.text, DARK, TextAlign::BASELINE_RIGHT, num.c_str());
+      };
+      if (cx + P.width_of(word, F.text) <= 290) {
+        it.print(290, 178, F.text, DARK, TextAlign::BASELINE_RIGHT, word.c_str());
+      } else if (cx + w_icon <= 290) {
+        wind_icon(290, 178);
+      } else {
+        wind_icon(290, 200);
+        detail_w -= w_icon + 12;
+      }
+    }
+    it.print(16, 200, F.text, DARK, TextAlign::BASELINE_LEFT, P.fit(m.detail, F.text, detail_w).c_str());
   }
-  it.print(16, 200, F.text, DARK, TextAlign::BASELINE_LEFT, P.fit(m.detail, F.text, 272).c_str());
   it.line(296, 62, 296, 200, LIGHT);
 
   // --- Power and energy ---
@@ -361,8 +385,27 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       const int cx = 596 + shown * 76;
       it.print(cx, 102, F.room, DARK, TextAlign::BASELINE_CENTER, m.fc[i].n.c_str());
       it.print(cx, 134, F.icon, DARK, TextAlign::CENTER, owm_icon(m.fc[i].i, m.fc[i].windy));
-      it.printf(cx, 184, F.fc, TextAlign::BASELINE_CENTER, "%d°", m.fc[i].hi);
-      it.printf(cx, 202, F.room, LIGHT, TextAlign::BASELINE_CENTER, "%d°", m.fc[i].lo);
+      // high and low side by side, below the rain probability
+      const std::string hi = esphome::to_string(m.fc[i].hi) + "°";
+      std::string lo = esphome::to_string(m.fc[i].lo) + "°";
+      const int w_hi = P.width_of(hi, F.fc);
+      int w_lo = P.width_of(lo, F.room);
+      const int gap = w_hi + w_lo + 7 <= 72 ? 7 : 3;  // narrower for wide winter values like "-5° -11°"
+      if (w_hi + gap + w_lo > 74) {                    // "-10° -14": without the second degree sign
+        lo = esphome::to_string(m.fc[i].lo);
+        w_lo = P.width_of(lo, F.room);
+      }
+      const int x0 = cx - (w_hi + gap + w_lo) / 2;
+      it.print(x0, 178, F.fc, TextAlign::BASELINE_LEFT, hi.c_str());
+      it.print(x0 + w_hi + gap, 178, F.room, LIGHT, TextAlign::BASELINE_LEFT, lo.c_str());
+      const int pop = pop_shown(m.fc[i].pop);
+      if (pop >= 0) {
+        const std::string ps = esphome::to_string(pop) + "%";
+        const int w_u = P.width_of(ICON_UMBRELLA, F.icon_s), w_p = P.width_of(ps, F.room);
+        const int px = cx - (w_u + 2 + w_p) / 2;
+        it.print(px, 200, F.icon_s, DARK, TextAlign::BASELINE_LEFT, ICON_UMBRELLA);
+        it.print(px + w_u + 2, 200, F.room, DARK, TextAlign::BASELINE_LEFT, ps.c_str());
+      }
       shown++;
     }
     if (shown == 0) it.print(558, 110, F.room, DARK, TextAlign::BASELINE_LEFT, "noch keine Daten");

@@ -34,12 +34,15 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
   m.gbft = g < 0 ? -1 : std::min(g, 12);
   m.detail = sval(out["detail"]);
   m.icon = m.has_out ? ival(out["icon"], 0) : -1;
+  auto popval = [&](JsonVariantConst v) -> int { const int p = ival(v, -1); return p < 0 ? -1 : std::min(p, 100); };
+  m.pop = popval(out["pop"]);
 
   m.fc.clear();
   for (JsonObjectConst d : x["fc"].as<JsonArrayConst>()) {
     if (m.fc.size() >= 6) break;
     const int dg = d["gbft"] | -1;
-    m.fc.push_back(Day{sval(d["n"]), d["i"] | 0, d["hi"] | 0, d["lo"] | 0, dg < 0 ? -1 : std::min(dg, 12)});
+    m.fc.push_back(
+        Day{sval(d["n"]), d["i"] | 0, d["hi"] | 0, d["lo"] | 0, dg < 0 ? -1 : std::min(dg, 12), popval(d["pop"])});
   }
 
   for (int r = 0; r < ROOM_COUNT; r++) {

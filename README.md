@@ -118,11 +118,11 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
   "v": 1,
   "power": 180,
   "energy": { "today": 1.7, "yesterday": 4.1 },
-  "out": { "t": 14, "hi": 23, "lo": 14, "h": 72, "bft": 3, "gbft": 5, "detail": "Klarer Himmel", "icon": 800 },
+  "out": { "t": 14, "hi": 23, "lo": 14, "h": 72, "bft": 3, "gbft": 5, "pop": 60, "detail": "Klarer Himmel", "icon": 800 },
   "fc": [
-    { "n": "Do", "i": 804, "hi": 21, "lo": 15, "gbft": 4 },
-    { "n": "Fr", "i": 500, "hi": 18, "lo": 11, "gbft": 7 },
-    { "n": "Sa", "i": 802, "hi": 17, "lo": 10, "gbft": 3 }
+    { "n": "Do", "i": 804, "hi": 21, "lo": 15, "gbft": 4, "pop": 20 },
+    { "n": "Fr", "i": 500, "hi": 18, "lo": 11, "gbft": 7, "pop": 70 },
+    { "n": "Sa", "i": 802, "hi": 17, "lo": 10, "gbft": 3, "pop": 0 }
   ],
   "rooms": { "db": [21, 64], "kz": [21, 68], "sz": [21, 64], "wz": [20, 63], "wk": [20, 68], "ga": [21, 62], "we": null },
   "contacts": { "open": 2, "names": ["SZ-Fen", "KZ-Fen"] },
@@ -147,9 +147,10 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `out.h` | % | Outdoor humidity |
 | `out.bft` | Beaufort 0–12 | Mean wind, shown as "Wind N" |
 | `out.gbft` | Beaufort 0–12 | Gusts; from 7 the dry-weather icon turns windy (off again below 6) |
+| `out.pop` | % 0–100 or null | Probability of precipitation for the rest of today (OpenWeatherMap `pop`, rounded to 10); shown from 30 % |
 | `out.detail` | text | Weather description line |
 | `out.icon` | OpenWeatherMap condition ID | Today's weather icon |
-| `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day |
+| `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day, `pop` highest probability of precipitation between 6 and 21 h in % (shown from 30 %) |
 | `rooms.<key>` | `[°C, %]` or `null` | Temperature and humidity per room; keys `db kz sz wz wk ga we` (see `display/model.h`) |
 | `contacts.open` | integer | Number of open windows and doors; 0 shows "all closed" |
 | `contacts.names` | list of text | Short names of the open contacts, shown in the hint bar; `GA-Tor` and `WE-Tor` are the two garage doors in layout B |

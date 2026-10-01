@@ -61,7 +61,7 @@ for l in lines[g_start + 1:]:
 struct = "\n".join(f"  {f['type']} {f['id']}{{{f['init'] if f['init'] is not None else ''}}};" for f in fields)
 
 FONTS = [("label", 13), ("room", 16), ("text", 17), ("hint", 18), ("hint_b", 18), ("fc", 16), ("value", 19),
-         ("head", 24), ("kw", 58), ("big", 72), ("tile", 40), ("icon", 40), ("icon_big", 88)]
+         ("head", 24), ("kw", 58), ("big", 72), ("tile", 40), ("icon", 40), ("icon_big", 88), ("icon_s", 16)]
 font_defs = "\n".join(f'static esphome::display::BaseFont FONT_{n}{{"{n}", {s}}};' for n, s in FONTS)
 font_ptrs = "\n".join(f"  esphome::display::BaseFont *f_{n} = &FONT_{n};" for n, _ in FONTS)
 new_fonts = "{" + ", ".join(f"&FONT_{n}" for n, _ in FONTS) + "}"

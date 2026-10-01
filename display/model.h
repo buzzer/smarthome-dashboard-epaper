@@ -24,12 +24,17 @@ struct Room {
 enum RoomIdx { DB, KZ, SZ, WZ, WK, GA, WE, ROOM_COUNT };
 static const char *const ROOM_KEYS[ROOM_COUNT] = {"db", "kz", "sz", "wz", "wk", "ga", "we"};
 
+// Probability of precipitation: shown from this value on (%)
+constexpr int POP_SHOW_MIN = 30;
+inline int pop_shown(int pop) { return pop >= POP_SHOW_MIN ? pop : -1; }
+
 struct Day {
   std::string n;  // weekday, e.g. "Mi"
   int i = 0;      // OWM weather ID
   int hi = 0;
   int lo = 0;
   int gbft = -1;       // strongest gust of the day in Beaufort, -1 unknown
+  int pop = -1;        // probability of precipitation in %, -1 unknown
   bool windy = false;  // set by apply_wind()
 };
 
@@ -45,6 +50,7 @@ struct Model {
   int h_out = NA_H;
   int bft = -1;   // Beaufort, -1 unknown
   int gbft = -1;  // gusts in Beaufort, -1 unknown
+  int pop = -1;   // probability of precipitation for the rest of today in %, -1 unknown
   bool windy = false;  // set by apply_wind()
   int icon = -1;  // OWM weather ID for "Heute" (today), -1 none
   std::string detail;

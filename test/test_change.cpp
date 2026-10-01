@@ -33,6 +33,13 @@ int main() {
   m.rooms[dash::KZ].t = 22; step("room temperature +1 °C", m, true);
   m.ct_open = 0; m.ct_names.clear(); step("contact closed", m, true);
   m.rooms[dash::GA].h = dash::NA_H; step("room value disappears", m, true);
+  m.pop = 20; step("rain probability 20 % (not shown)", m, false);
+  m.pop = 0; step("rain probability 0 % (not shown)", m, false);
+  m.pop = 40; step("rain probability 40 % (shown)", m, true);
+  m.pop = 50; step("rain probability 40 -> 50 %", m, true);
+  m.fc = {dash::Day{"Do", 500, 12, 8, 3, 10}}; step("forecast day added", m, true);
+  m.fc[0].pop = 20; step("forecast rain 10 -> 20 % (not shown)", m, false);
+  m.fc[0].pop = 70; step("forecast rain 20 -> 70 %", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;
