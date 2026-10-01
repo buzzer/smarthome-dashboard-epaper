@@ -51,6 +51,20 @@ mqtt:
     retain: true
   on_connect:
     - lambda: 'id(g_t_mqtt) = millis();'
+    # running firmware build, only after a cold boot (power-on, reset, OTA update), not after deep sleep
+    - if:
+        condition:
+          lambda: 'return esp_reset_reason() != ESP_RST_DEEPSLEEP;'
+        then:
+          # on_connect fires before the client counts as connected; publish() would drop the message
+          - wait_until:
+              condition:
+                mqtt.connected:
+              timeout: 5s
+          - mqtt.publish:
+              topic: esphome/${name}/firmware
+              payload: !lambda 'return id(fw_version).state;'
+              retain: true
   on_message:
     # Maintenance mode from Node-RED ("Wartung an"/"Wartung aus" = maintenance on/off, retained): stay awake for OTA
     - topic: esphome/maintenance
@@ -97,8 +111,8 @@ text_sensor:
     reset_reason:
       id: reset_reason
       name: "Reset Reason"
-  # ESPHome version and build time (retained), shows which firmware image is actually running
+  # ESPHome version and build time, shows which firmware image is actually running
   - platform: version
-    name: "Firmware"
+    id: fw_version
     hide_timestamp: false
-    state_topic: esphome/${name}/firmware
+    internal: true  # published only after a cold boot, see mqtt.on_connect

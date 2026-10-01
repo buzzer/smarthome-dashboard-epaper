@@ -56,3 +56,6 @@ sensor:
     update_interval: never
     accuracy_decimals: 3
     state_topic: esphome/${name}/battery
+    filters:
+      # below this the ESP32 cannot run, so the pin is not on the supply (see BATT_PLAUSIBLE_V in battery.h)
+      - lambda: 'return x < 2.5f ? NAN : x;'

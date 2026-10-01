@@ -98,7 +98,7 @@ Room abbreviations (`DB`, `KZ`, `WZ`, …) follow the German room names and are 
 3. `esphome run HomeDashboard1.yaml`
 
 The running firmware build (ESPHome version and build time) is published retained on
-`esphome/<name>/firmware`. Check it after an OTA update: if a new image hangs during boot, the task
+`esphome/<name>/firmware` after every cold boot (power-on, reset, update), not after deep sleep. Check it after an OTA update: if a new image hangs during boot, the task
 watchdog resets the board and the bootloader silently falls back to the previous image.
 
 After the first flash the device runs in deep sleep. For OTA updates, enable maintenance mode in
