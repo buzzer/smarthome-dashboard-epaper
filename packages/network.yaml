@@ -18,7 +18,7 @@ wifi:
   on_connect:
     - lambda: |-
         id(g_t_wifi) = millis();
-        dash::sntp_restart();  // first time request now, not after the lwIP retry timeout
+        dash::sntp_restart();  // ask for the time right away (system/sntp.h)
     # connect MQTT right away; on a normal start the client waits a fixed 5 s
     - mqtt.enable:
 
@@ -97,3 +97,8 @@ text_sensor:
     reset_reason:
       id: reset_reason
       name: "Reset Reason"
+  # ESPHome version and build time (retained), shows which firmware image is actually running
+  - platform: version
+    name: "Firmware"
+    hide_timestamp: false
+    state_topic: esphome/${name}/firmware

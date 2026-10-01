@@ -14,6 +14,13 @@ esphome:
     - priority: 200  # after WiFi setup (still disabled), before anything is sent
       then:
         - lambda: |-
+            // maintenance mode keeps the board awake: measure again before every redraw (with WiFi on the
+            // value is a bit noisier; it also shows how far the voltage drops while transmitting)
+            dash::before_maintenance_draw = []() {
+              id(vbat).update();
+              dash::apply_battery(dash::M, id(vbat).state, ${batt_low_v}, ${batt_ok_v}, ${batt_empty_v});
+              ESP_LOGI("battery", "maintenance: %.3f V%s", dash::M.vbat, dash::M.batt_low ? " - low" : "");
+            };
             id(vbat).update();
             dash::apply_battery(dash::M, id(vbat).state, ${batt_low_v}, ${batt_ok_v}, ${batt_empty_v});
             ESP_LOGI("battery", "%.3f V%s", dash::M.vbat,

@@ -70,7 +70,8 @@ Estimated battery life with the 10-minute wake interval and the night pause (awa
 `packages/battery.yaml` measures the supply voltage on GPIO33, which is wired directly to the 3.3 V pin
 fed by a LiFePO4 cell. The measurement runs once per wake-up before WiFi starts:
 
-- The voltage is published retained on `esphome/<name>/battery`.
+- The voltage is published retained on `esphome/<name>/battery`; in maintenance mode it is measured again
+  before every redraw.
 - Below 3.05 V the display shows "Akku schwach" in the hint bar (off again above 3.10 V).
 - Below 2.90 V it draws "Akku leer – bitte laden" once and then sleeps for 6 hours without WiFi, to
   protect the cell from deep discharge; it checks again after each period.
@@ -95,6 +96,10 @@ Room abbreviations (`DB`, `KZ`, `WZ`, …) follow the German room names and are 
    not permitted). Copy them from your own Windows or macOS installation into `Fonts/`.
    `Fonts/materialdesignicons.ttf` is from Pictogrammers (Material Design Icons).
 3. `esphome run HomeDashboard1.yaml`
+
+The running firmware build (ESPHome version and build time) is published retained on
+`esphome/<name>/firmware`. Check it after an OTA update: if a new image hangs during boot, the task
+watchdog resets the board and the bootloader silently falls back to the previous image.
 
 After the first flash the device runs in deep sleep. For OTA updates, enable maintenance mode in
 Node-RED (retained `esphome/maintenance` = `on`); the device then stays awake on its next wake-up.

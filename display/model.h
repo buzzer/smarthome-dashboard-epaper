@@ -78,6 +78,9 @@ struct Model {
   float pr_tool = NAN, pr_bed = NAN;
 };
 
+// Called before every redraw in maintenance mode, if set (packages/battery.yaml measures the battery there)
+inline void (*before_maintenance_draw)() = nullptr;
+
 // The firmware's single model (RAM; refilled from MQTT after every deep sleep)
 static Model M;
 

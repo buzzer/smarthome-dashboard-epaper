@@ -37,12 +37,14 @@ script:
       - wait_until:
           condition:
             lambda: 'return id(sntp_time).now().is_valid();'
-          timeout: 15s  # only waits after a cold boot; deep sleep keeps the time
+          # only waits after a cold boot (deep sleep keeps the time); SNTP is restarted on connect
+          timeout: 15s
       # Maintenance mode: stay awake and draw every minute until "Wartung aus" (maintenance off) arrives
       - while:
           condition:
             lambda: 'return id(g_maint);'
           then:
+            - lambda: 'if (dash::before_maintenance_draw != nullptr) dash::before_maintenance_draw();'
             - component.update: eink_display
             - delay: 60s
       - lambda: |-
