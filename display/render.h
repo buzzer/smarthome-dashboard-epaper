@@ -300,10 +300,12 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     int detail_w = 272;
     if (m.bft >= 0) {
       const std::string word = "Wind " + esphome::to_string(m.bft), num = esphome::to_string(m.bft);
-      const int w_icon = P.width_of(ICON_WIND, F.icon_s) + 2 + P.width_of(num, F.text);
+      // the wind glyph fills its box almost to the right edge: 4 px gap so it looks like the umbrella's 2 px
+      const int w_glyph = P.width_of(ICON_WIND, F.icon_s) + 4;
+      const int w_icon = w_glyph + P.width_of(num, F.text);
       auto wind_icon = [&](int right, int y) {
         it.print(right - w_icon, y, F.icon_s, DARK, TextAlign::BASELINE_LEFT, ICON_WIND);
-        it.print(right, y, F.text, DARK, TextAlign::BASELINE_RIGHT, num.c_str());
+        it.print(right - w_icon + w_glyph, y, F.text, DARK, TextAlign::BASELINE_LEFT, num.c_str());
       };
       if (cx + P.width_of(word, F.text) <= 290) {
         it.print(290, 178, F.text, DARK, TextAlign::BASELINE_RIGHT, word.c_str());
