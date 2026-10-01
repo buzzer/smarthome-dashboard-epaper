@@ -40,6 +40,9 @@ int main() {
   m.fc = {dash::Day{"Do", 500, 12, 8, 3, 10}}; step("forecast day added", m, true);
   m.fc[0].pop = 20; step("forecast rain 10 -> 20 % (not shown)", m, false);
   m.fc[0].pop = 70; step("forecast rain 20 -> 70 %", m, true);
+  m.scene = "Sauna"; step("scene starts (replaces power)", m, true);
+  m.power = 3000; m.en_today = 4.0f; step("power and energy change during the scene (not shown)", m, false);
+  m.scene.clear(); step("scene ends (power shown again)", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;

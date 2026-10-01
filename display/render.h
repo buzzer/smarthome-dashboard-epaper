@@ -318,28 +318,42 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   }
   it.line(296, 62, 296, 200, LIGHT);
 
-  // --- Power and energy ---
-  it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "LEISTUNG");
-  if (m.power != NA_P) {
-    std::string num, unit;
-    if (m.power >= 1000) {
-      num = de1(m.power / 1000.0f);
-      unit = " kW";
-    } else {
-      num = esphome::to_string(m.power);
-      unit = " W";
-    }
-    it.print(310, 140, F.kw, TextAlign::BASELINE_LEFT, num.c_str());
-    it.print(310 + P.width_of(num, F.kw), 140, F.head, DARK, TextAlign::BASELINE_LEFT, unit.c_str());
+  // --- Middle column: active scene, otherwise power and energy (the forecast stays visible) ---
+  if (!m.scene.empty()) {
+    it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "SZENE AKTIV");
+    it.print(312, 122, F.tile, TextAlign::BASELINE_LEFT, P.fit(m.scene, F.tile, 220).c_str());
+    if (!m.scene_since.empty())
+      it.printf(314, 158, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.scene_since.c_str());
+    const Room *r = nullptr;
+    if (m.scene == "Sauna")
+      r = &R[WK];
+    else if (m.scene == "Kamin")
+      r = &R[WZ];
+    if (r != nullptr)
+      it.printf(314, 184, F.text, DARK, TextAlign::BASELINE_LEFT, "%s %s %s", r->abbr, deg(r->t).c_str(), pct(r->h).c_str());
   } else {
-    it.print(310, 140, F.kw, TextAlign::BASELINE_LEFT, "–");
+    it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "LEISTUNG");
+    if (m.power != NA_P) {
+      std::string num, unit;
+      if (m.power >= 1000) {
+        num = de1(m.power / 1000.0f);
+        unit = " kW";
+      } else {
+        num = esphome::to_string(m.power);
+        unit = " W";
+      }
+      it.print(310, 140, F.kw, TextAlign::BASELINE_LEFT, num.c_str());
+      it.print(310 + P.width_of(num, F.kw), 140, F.head, DARK, TextAlign::BASELINE_LEFT, unit.c_str());
+    } else {
+      it.print(310, 140, F.kw, TextAlign::BASELINE_LEFT, "–");
+    }
+    if (!std::isnan(m.en_today)) label_value(314, 178, F.text, "Heute ", de1(m.en_today) + " kWh");
+    if (!std::isnan(m.en_yesterday)) label_value(314, 200, F.text, "Gestern ", de1(m.en_yesterday) + " kWh");
   }
-  if (!std::isnan(m.en_today)) label_value(314, 178, F.text, "Heute ", de1(m.en_today) + " kWh");
-  if (!std::isnan(m.en_yesterday)) label_value(314, 200, F.text, "Gestern ", de1(m.en_yesterday) + " kWh");
   it.line(540, 62, 540, 200, LIGHT);
 
   // --- Right column: context tile, otherwise forecast ---
-  // Priority: running 3D print, active scene, maintenance
+  // Priority: running 3D print, maintenance
   if (m.pr_active) {
     it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "3D-DRUCK");
     const int p = std::max(0, std::min(100, m.pr_progress));
@@ -353,18 +367,6 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
                 (m.pr_left % 3600) / 60);
     if (!std::isnan(m.pr_tool) && !std::isnan(m.pr_bed))
       it.printf(558, 200, F.room, DARK, TextAlign::BASELINE_LEFT, "Düse %.0f° · Bett %.0f°", m.pr_tool, m.pr_bed);
-  } else if (!m.scene.empty()) {
-    it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "SZENE AKTIV");
-    it.print(556, 122, F.tile, TextAlign::BASELINE_LEFT, P.fit(m.scene, F.tile, 224).c_str());
-    if (!m.scene_since.empty())
-      it.printf(558, 158, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.scene_since.c_str());
-    const Room *r = nullptr;
-    if (m.scene == "Sauna")
-      r = &R[WK];
-    else if (m.scene == "Kamin")
-      r = &R[WZ];
-    if (r != nullptr)
-      it.printf(558, 184, F.text, DARK, TextAlign::BASELINE_LEFT, "%s %s %s", r->abbr, deg(r->t).c_str(), pct(r->h).c_str());
   } else if (!m.batt.empty() || !m.dead.empty()) {
     it.filled_rectangle(548, 56, 236, 26, DARK);
     it.print(558, 74, F.label, PAPER, TextAlign::BASELINE_LEFT, "WARTUNG");
