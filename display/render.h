@@ -320,19 +320,42 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   }
   it.line(296, 62, 296, 200, LIGHT);
 
-  // --- Middle column: active scene, otherwise power and energy (the forecast stays visible) ---
-  if (!m.scene.empty()) {
-    it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "SZENE AKTIV");
-    it.print(312, 122, F.tile, TextAlign::BASELINE_LEFT, P.fit(m.scene, F.tile, 220).c_str());
+  // Context tiles; x = left edge of the column (middle 314, right 558)
+  auto print_tile = [&](int x) {
+    it.print(x, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "3D-DRUCK");
+    const int p = std::max(0, std::min(100, m.pr_progress));
+    it.printf(x - 2, 122, F.tile, TextAlign::BASELINE_LEFT, "%d %%", p);
+    if (gray) it.filled_rectangle(x, 134, 222, 16, LIGHT);  // remainder light gray
+    it.rectangle(x, 134, 222, 16);
+    it.rectangle(x + 1, 135, 220, 14);
+    it.filled_rectangle(x, 134, 222 * p / 100, 16);
+    if (m.pr_left >= 0)
+      it.printf(x, 176, F.text, DARK, TextAlign::BASELINE_LEFT, "noch %d:%02d h", m.pr_left / 3600,
+                (m.pr_left % 3600) / 60);
+    if (!std::isnan(m.pr_tool) && !std::isnan(m.pr_bed))
+      it.printf(x, 200, F.room, DARK, TextAlign::BASELINE_LEFT, "Düse %.0f° · Bett %.0f°", m.pr_tool, m.pr_bed);
+  };
+  auto scene_tile = [&](int x) {
+    it.print(x, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "SZENE AKTIV");
+    it.print(x - 2, 122, F.tile, TextAlign::BASELINE_LEFT, P.fit(m.scene, F.tile, 220).c_str());
     if (!m.scene_since.empty())
-      it.printf(314, 158, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.scene_since.c_str());
+      it.printf(x, 158, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.scene_since.c_str());
     const Room *r = nullptr;
     if (m.scene == "Sauna")
       r = &R[WK];
     else if (m.scene == "Kamin")
       r = &R[WZ];
     if (r != nullptr)
-      it.printf(314, 184, F.text, DARK, TextAlign::BASELINE_LEFT, "%s %s %s", r->abbr, deg(r->t).c_str(), pct(r->h).c_str());
+      it.printf(x, 184, F.text, DARK, TextAlign::BASELINE_LEFT, "%s %s %s", r->abbr, deg(r->t).c_str(), pct(r->h).c_str());
+  };
+
+  // --- Middle column: running 3D print or active scene, otherwise power and energy ---
+  // (the forecast stays visible; with print and scene at the same time the scene moves to the right column)
+  const bool scene_right = m.pr_active && !m.scene.empty();
+  if (m.pr_active) {
+    print_tile(314);
+  } else if (!m.scene.empty()) {
+    scene_tile(314);
   } else {
     it.print(314, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "LEISTUNG");
     if (m.power != NA_P) {
@@ -355,20 +378,9 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   it.line(540, 62, 540, 200, LIGHT);
 
   // --- Right column: context tile, otherwise forecast ---
-  // Priority: running 3D print, maintenance
-  if (m.pr_active) {
-    it.print(558, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "3D-DRUCK");
-    const int p = std::max(0, std::min(100, m.pr_progress));
-    it.printf(556, 122, F.tile, TextAlign::BASELINE_LEFT, "%d %%", p);
-    if (gray) it.filled_rectangle(558, 134, 222, 16, LIGHT);  // remainder light gray
-    it.rectangle(558, 134, 222, 16);
-    it.rectangle(559, 135, 220, 14);
-    it.filled_rectangle(558, 134, 222 * p / 100, 16);
-    if (m.pr_left >= 0)
-      it.printf(558, 176, F.text, DARK, TextAlign::BASELINE_LEFT, "noch %d:%02d h", m.pr_left / 3600,
-                (m.pr_left % 3600) / 60);
-    if (!std::isnan(m.pr_tool) && !std::isnan(m.pr_bed))
-      it.printf(558, 200, F.room, DARK, TextAlign::BASELINE_LEFT, "Düse %.0f° · Bett %.0f°", m.pr_tool, m.pr_bed);
+  // Priority: scene (only while a print is shown in the middle), maintenance
+  if (scene_right) {
+    scene_tile(558);
   } else if (!m.batt.empty() || !m.dead.empty()) {
     it.filled_rectangle(548, 56, 236, 26, DARK);
     it.print(558, 74, F.label, PAPER, TextAlign::BASELINE_LEFT, "WARTUNG");

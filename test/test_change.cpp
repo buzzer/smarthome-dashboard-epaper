@@ -43,6 +43,9 @@ int main() {
   m.scene = "Sauna"; step("scene starts (replaces power)", m, true);
   m.power = 3000; m.en_today = 4.0f; step("power and energy change during the scene (not shown)", m, false);
   m.scene.clear(); step("scene ends (power shown again)", m, true);
+  m.pr_active = true; m.pr_progress = 10; step("print starts (replaces power)", m, true);
+  m.power = 400; m.en_today = 4.8f; step("power and energy change during the print (not shown)", m, false);
+  m.pr_active = false; step("print ends (power shown again)", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;

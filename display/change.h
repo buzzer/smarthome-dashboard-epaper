@@ -92,7 +92,7 @@ inline ChangeResult changes(const Model &m, int today) {
   // Tolerances
   const int NA = INT32_MIN;
   auto hum = [&](int v) -> int { return v == NA_H ? NA : v; };
-  const bool power_shown = m.scene.empty();  // an active scene replaces power and energy
+  const bool power_shown = m.scene.empty() && !m.pr_active;  // scene or print replace power and energy
   const int cur[10] = {m.power == NA_P || !power_shown ? NA : m.power,
                        std::isnan(m.en_today) || !power_shown ? NA : (int) lroundf(m.en_today * 10),
                        hum(m.h_out),

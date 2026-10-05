@@ -16,8 +16,8 @@ living room shutters. Design mockup with example values.*
 humidity) and a summary of house, car and devices. Problems stay black, everything that is fine
 recedes into gray. Design mockup with example values.*
 
-While a 3D print is running or battery devices need attention, a context tile replaces the forecast.
-An active scene replaces power and energy in the middle column instead, so the forecast stays visible:
+While a 3D print is running or a scene is active, a context tile replaces power and energy in the
+middle column, so the forecast stays visible. Battery devices that need attention replace the forecast:
 
 <img src="docs/tile-print.svg" alt="Tile: 3D print" width="244"> <img src="docs/tile-scene.svg" alt="Tile: active scene" width="244"> <img src="docs/tile-maintenance.svg" alt="Tile: maintenance" width="244">
 
@@ -162,11 +162,12 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `devices.batt`, `devices.dead` | list of text | Devices with an empty battery or without messages; any entry shows the maintenance tile |
 | `car` | object or `null` | `windows`, `lids` (true = closed), `service` (true = due), `range` km, `at` text; shown in layout B |
 | `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
-| `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces the forecast |
+| `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces power and energy. Node-RED sends it only while OctoPrint reports printing, progress is below 100 % and the nozzle has a target temperature |
 
-The context tiles replace the forecast in this order: print, maintenance; the scene tile replaces power
-and energy. Change detection compares everything visible; power, today's energy and humidities use tolerances (see `display/change.h`),
-so small fluctuations do not cause a refresh. The scenarios in `test/scenarios/` are further examples.
+Print and scene tiles replace power and energy (print first; if both are active the scene moves to
+the right column); the maintenance tile replaces the forecast. Change detection compares everything
+visible; power, today's energy and humidities use tolerances (see `display/change.h`), so small
+fluctuations do not cause a refresh. The scenarios in `test/scenarios/` are further examples.
 
 ## Tests
 
