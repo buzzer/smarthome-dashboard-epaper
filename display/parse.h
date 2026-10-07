@@ -36,6 +36,9 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
   m.icon = m.has_out ? ival(out["icon"], 0) : -1;
   auto popval = [&](JsonVariantConst v) -> int { const int p = ival(v, -1); return p < 0 ? -1 : std::min(p, 100); };
   m.pop = popval(out["pop"]);
+  m.night = out["night"] | false;
+  m.sunrise = sval(out["sun"][0]);
+  m.sunset = sval(out["sun"][1]);
 
   m.fc.clear();
   for (JsonObjectConst d : x["fc"].as<JsonArrayConst>()) {

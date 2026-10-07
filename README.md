@@ -148,6 +148,8 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `out.bft` | Beaufort 0–12 | Mean wind, shown as "Wind N" |
 | `out.gbft` | Beaufort 0–12 | Gusts; from 7 the dry-weather icon turns windy (off again below 6) |
 | `out.pop` | % 0–100 or null | Probability of precipitation for the rest of today (OpenWeatherMap `pop`, rounded to 10); shown from 30 % |
+| `out.sun` | `["hh:mm", "hh:mm"]` or null | Sunrise and sunset today (OpenWeatherMap, local time), shown right-aligned in the "HEUTE" header |
+| `out.night` | `true` / `false` | After sunset (OpenWeatherMap icon ends in `n`): moon instead of sun for clear and partly cloudy sky; the icon then shows the current weather instead of the midday forecast. Sunset alone does not cause a redraw; the moon appears with the next one |
 | `out.detail` | text | Weather description line |
 | `out.icon` | OpenWeatherMap condition ID | Today's weather icon |
 | `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day, `pop` highest probability of precipitation between 6 and 21 h in % (shown from 30 %) |

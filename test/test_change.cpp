@@ -46,6 +46,9 @@ int main() {
   m.pr_active = true; m.pr_progress = 10; step("print starts (replaces power)", m, true);
   m.power = 400; m.en_today = 4.8f; step("power and energy change during the print (not shown)", m, false);
   m.pr_active = false; step("print ends (power shown again)", m, true);
+  m.night = true; step("sunset alone (moon appears with the next redraw)", m, false);
+  m.sunrise = "07:42"; m.sunset = "18:51"; step("sun times appear", m, true);
+  m.sunrise = "07:44"; m.sunset = "18:49"; step("next day: sun times change", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;

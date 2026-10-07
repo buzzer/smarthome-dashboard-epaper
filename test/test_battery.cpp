@@ -25,8 +25,8 @@ int main() {
 
   static esphome::display::BaseFont FL{"label", 13}, FR{"room", 16}, FT{"text", 17}, FH{"hint", 18},
       FHB{"hint_b", 18}, FFC{"fc", 16}, FV{"value", 19}, FHD{"head", 24}, FK{"kw", 58}, FB{"big", 72},
-      FTL{"tile", 40}, FI{"icon", 40}, FIB{"icon_big", 88}, FIS{"icon_s", 16};
-  const dash::Fonts F{&FL, &FR, &FT, &FH, &FHB, &FFC, &FV, &FHD, &FK, &FB, &FTL, &FI, &FIB, &FIS};
+      FTL{"tile", 40}, FI{"icon", 40}, FIB{"icon_big", 88}, FIS{"icon_s", 16}, FIXS{"icon_xs", 13};
+  const dash::Fonts F{&FL, &FR, &FT, &FH, &FHB, &FFC, &FV, &FHD, &FK, &FB, &FTL, &FI, &FIB, &FIS, &FIXS};
   auto drawn = [&](const dash::Model &mm, const char *text) {
     esphome::display::Display d;
     dash::render(d, mm, F, MockTime{}, true);

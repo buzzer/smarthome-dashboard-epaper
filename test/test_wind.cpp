@@ -40,8 +40,8 @@ int main() {
   check("same model again (idempotent)", m.fc[0].windy, true);
 
   // icons: only dry weather gets the windy variant
-  auto icon = [&](const char *what, int id, bool windy, const char *expect) {
-    const bool ok = std::strcmp(dash::owm_icon(id, windy), expect) == 0;
+  auto icon = [&](const char *what, int id, bool windy, const char *expect, bool night = false) {
+    const bool ok = std::strcmp(dash::owm_icon(id, windy, night), expect) == 0;
     if (!ok) fails++;
     std::cout << (ok ? "OK    " : "FAIL  ") << " icon " << what << std::endl;
   };
@@ -50,6 +50,13 @@ int main() {
   icon("500 windy stays rain", 500, true, "\U000F0597");
   icon("741 windy stays fog", 741, true, "\U000F0591");
   icon("800 calm = sunny", 800, false, "\U000F0599");
+  // night: moon instead of sun, everything else unchanged
+  icon("800 night = moon", 800, false, "\U000F0594", true);
+  icon("801 night = partly cloudy night", 801, false, "\U000F0F31", true);
+  icon("802 night = partly cloudy night", 802, false, "\U000F0F31", true);
+  icon("803 night stays cloudy", 803, false, "\U000F0590", true);
+  icon("500 night stays rain", 500, false, "\U000F0597", true);
+  icon("800 windy night stays windy", 800, true, "\U000F059D", true);
 
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;

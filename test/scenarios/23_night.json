@@ -12,9 +12,9 @@
   "lo": 14,
   "h": 72,
   "bft": 3,
-  "detail": "Leichter Regen",
-  "icon": 500,
-  "pop": 60,
+  "detail": "Mäßig bewölkt",
+  "icon": 801,
+  "night": true,
   "sun": [
    "07:42",
    "18:51"
@@ -25,22 +25,19 @@
    "n": "Do",
    "i": 804,
    "hi": 21,
-   "lo": 15,
-   "pop": 20
+   "lo": 15
   },
   {
    "n": "Fr",
    "i": 500,
    "hi": 18,
-   "lo": 11,
-   "pop": 70
+   "lo": 11
   },
   {
    "n": "Sa",
    "i": 802,
    "hi": 17,
-   "lo": 10,
-   "pop": 100
+   "lo": 10
   }
  ],
  "rooms": {

@@ -17,7 +17,7 @@ display:
     lambda: |-
       static const dash::Fonts F{id(f_label), id(f_room),  id(f_text), id(f_hint), id(f_hint_b),
                                  id(f_fc),    id(f_value), id(f_head), id(f_kw),   id(f_big),
-                                 id(f_tile),  id(f_icon),  id(f_icon_big), id(f_icon_s)};
+                                 id(f_tile),  id(f_icon),  id(f_icon_big), id(f_icon_s), id(f_icon_xs)};
       if (dash::M.batt_empty) {  // packages/battery.yaml
         dash::render_empty(it, F, dash::M.vbat);
         return;

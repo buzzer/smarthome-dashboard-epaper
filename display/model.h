@@ -52,6 +52,8 @@ struct Model {
   int gbft = -1;  // gusts in Beaufort, -1 unknown
   int pop = -1;   // probability of precipitation for the rest of today in %, -1 unknown
   bool windy = false;  // set by apply_wind()
+  bool night = false;  // after sunset: moon instead of sun
+  std::string sunrise, sunset;  // "hh:mm", empty = unknown
   int icon = -1;  // OWM weather ID for "Heute" (today), -1 none
   std::string detail;
   std::vector<Day> fc;  // the next days (at most 3 are shown)

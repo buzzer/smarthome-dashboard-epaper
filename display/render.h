@@ -17,7 +17,7 @@ using esphome::display::COLOR_ON;
 using esphome::display::TextAlign;
 
 struct Fonts {
-  BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big, *icon_s;
+  BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big, *icon_s, *icon_xs;
 };
 
 // ---------- Formatting ----------
@@ -48,7 +48,7 @@ inline std::string power_text(const Model &m) {
   if (m.power >= 1000) return de1(m.power / 1000.0f) + " kW";
   return esphome::to_string(m.power) + " W";
 }
-inline const char *owm_icon(int id, bool windy = false) {
+inline const char *owm_icon(int id, bool windy = false, bool night = false) {
   if (windy && id == 800) return "\U000F059D";                     // windy, clear sky
   if (windy && id > 800 && id <= 804) return "\U000F059E";         // windy, cloudy
   if (id >= 200 && id < 300) return "\U000F0593";                  // thunderstorm
@@ -57,11 +57,15 @@ inline const char *owm_icon(int id, bool windy = false) {
   if (id >= 300 && id < 600) return "\U000F0597";                  // rain
   if (id >= 600 && id < 700) return "\U000F0598";                  // snow
   if (id >= 700 && id < 800) return "\U000F0591";                  // fog
+  if (night && id == 800) return "\U000F0594";                    // clear night: moon
+  if (night && (id == 801 || id == 802)) return "\U000F0F31";     // partly cloudy night
   if (id == 800) return "\U000F0599";                              // sunny
   if (id == 801 || id == 802) return "\U000F0595";                 // partly cloudy
   return "\U000F0590";                                             // cloudy
 }
 static const char *const ICON_UMBRELLA = "\U000F054A";  // rain probability
+static const char *const ICON_SUNRISE = "\U000F059C";   // sunrise/sunset times in the "HEUTE" header
+static const char *const ICON_SUNSET = "\U000F059B";
 static const char *const ICON_WIND = "\U000F059D";      // wind force when "Wind 3" does not fit
 inline std::string shutter_text(int pos) {
   if (pos < 0) return "–";
@@ -262,6 +266,16 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   // ===================== Layout A: daily overview =====================
   // --- Today ---
   it.print(16, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "HEUTE");
+  if (!m.sunrise.empty() && !m.sunset.empty()) {  // sunrise and sunset, right-aligned up to the separator
+    const int w_icon = P.width_of(ICON_SUNRISE, F.icon_xs), w_time = P.width_of(m.sunrise, F.label);
+    const int w_set = P.width_of(m.sunset, F.label);
+    const int x = 290 - (2 * (w_icon + 3) + w_time + w_set + 14);
+    it.print(x, 74, F.icon_xs, LIGHT, TextAlign::BASELINE_LEFT, ICON_SUNRISE);
+    it.print(x + w_icon + 3, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, m.sunrise.c_str());
+    const int x2 = x + w_icon + 3 + w_time + 14;
+    it.print(x2, 74, F.icon_xs, LIGHT, TextAlign::BASELINE_LEFT, ICON_SUNSET);
+    it.print(x2 + w_icon + 3, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, m.sunset.c_str());
+  }
   const std::string t_out = t_out_text(m);
   // Large temperature; the icon fills the space up to the separator (x = 296)
   const int t_w_big = P.width_of(t_out, F.big);
@@ -272,9 +286,9 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     const int free_l = 12 + P.width_of(t_out, f_out) + 10;  // left edge of the free space
     const int free_w = 292 - free_l;
     if (free_w >= 96)
-      it.print(free_l + free_w / 2, 114, F.icon_big, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy));
+      it.print(free_l + free_w / 2, 114, F.icon_big, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy, m.night));
     else
-      it.print(270, 120, F.icon, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy));
+      it.print(270, 120, F.icon, DARK, TextAlign::CENTER, owm_icon(m.icon, m.windy, m.night));
   }
   {
     // high (bold) and low (light) as in the forecast, humidity, rain, wind. Wind as "Wind 3" if it fits,
