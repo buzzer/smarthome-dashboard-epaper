@@ -154,6 +154,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `out.icon` | OpenWeatherMap condition ID | Today's weather icon |
 | `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day, `pop` highest probability of precipitation between 6 and 21 h in % (shown from 30 %) |
 | `rooms.<key>` | `[°C, %]` or `null` | Temperature and humidity per room; keys `db kz sz wz wk ga we` (see `display/model.h`) |
+| `vent` | list of room keys | Rooms to ventilate by hand, most urgent first (`kz sz wz wk ga we`). Without open contacts the hint bar shows "Lüften" with the rooms and their humidity; next to open contacts it shows "Lüften: KZ · WK" on the right. The humidity of these rooms is drawn white on black in the house. Node-RED decides (see below) |
 | `contacts.open` | integer | Number of open windows and doors; 0 shows "all closed" |
 | `contacts.names` | list of text | Short names of the open contacts, shown in the hint bar; `GA-Tor` and `WE-Tor` are the two garage doors in layout B |
 | `attention` | text | Extra text for the hint bar, shown on the right |
@@ -165,6 +166,12 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `car` | object or `null` | `windows`, `lids` (true = closed), `service` (true = due), `range` km, `at` text; shown in layout B |
 | `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
 | `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces power and energy. Node-RED sends it only while OctoPrint reports printing, progress is below 100 % and the nozzle has a target temperature |
+
+Ventilation advice (`vent`) is calculated in Node-RED, not on the display: a room is listed when its
+relative humidity reaches 70 % (laundry room 75 %), the outside air is drier in absolute terms
+(at least 1.5 g/m³ less water per m³), none of the room's contacts is open, and nobody is away. It
+turns off 4 percentage points below the threshold, 15 minutes after a window was closed it is
+evaluated again, and from 22 to 6 o'clock there is no advice. The air pressure is not used.
 
 Print and scene tiles replace power and energy (print first; if both are active the scene moves to
 the right column); the maintenance tile replaces the forecast. Change detection compares everything

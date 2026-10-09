@@ -68,6 +68,8 @@ inline ChangeResult changes(const Model &m, int today) {
   add(m.attention);
   addi(m.batt_low);
   section("contacts");
+  for (int r : m.vent) addi(r);
+  section("ventilation");
   add(m.alarm); add(m.alarm_at); add(m.scene); add(m.scene_since);
   for (const auto &b : m.batt) add(b);
   add("#");

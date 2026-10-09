@@ -1,6 +1,7 @@
 #pragma once
 // Data model of the home display: everything the display shows, in one struct.
 // Filled from esphome/display (Node-RED "Display-Modell", v1), read by render() and changes().
+#include <cctype>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -23,6 +24,13 @@ struct Room {
 // WE = workshop (Werkstatt)
 enum RoomIdx { DB, KZ, SZ, WZ, WK, GA, WE, ROOM_COUNT };
 static const char *const ROOM_KEYS[ROOM_COUNT] = {"db", "kz", "sz", "wz", "wk", "ga", "we"};
+
+// Short room name as in the JSON keys and the hint bar, e.g. "KZ"
+inline std::string room_short(int r) {
+  std::string k = ROOM_KEYS[r];
+  for (auto &c : k) c = (char) toupper((unsigned char) c);
+  return k;
+}
 
 // Probability of precipitation: shown from this value on (%)
 constexpr int POP_SHOW_MIN = 30;
@@ -63,6 +71,7 @@ struct Model {
       {"Waschk.", "Waschk."},  {"Garage", "Garage"},     {"Werkstatt", "Werkst."},
   };
 
+  std::vector<int> vent;               // rooms to ventilate by hand (RoomIdx), most urgent first
   int ct_open = NA_H;                  // number of open contacts
   std::vector<std::string> ct_names;   // short names, e.g. "SZ-Fen"
   std::string attention;               // short text for the hint bar

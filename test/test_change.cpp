@@ -49,6 +49,11 @@ int main() {
   m.night = true; step("sunset alone (moon appears with the next redraw)", m, false);
   m.sunrise = "07:42"; m.sunset = "18:51"; step("sun times appear", m, true);
   m.sunrise = "07:44"; m.sunset = "18:49"; step("next day: sun times change", m, true);
+  m.rooms[dash::KZ].h = 74; m.vent = {dash::KZ}; step("ventilation advised for KZ (humidity 74 %)", m, true);
+  m.rooms[dash::KZ].h = 76; step("KZ humidity 74 -> 76 % while advised (within tolerance)", m, false);
+  m.vent = {dash::WK, dash::KZ}; step("WK added and sorted first", m, true);
+  m.vent = {dash::WK}; step("KZ no longer advised", m, true);
+  m.vent.clear(); step("ventilation over", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;

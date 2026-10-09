@@ -2,6 +2,7 @@
 // esphome/display (JSON, v1) -> Model
 #include <ArduinoJson.h>
 #include <algorithm>
+#include <cstring>
 #include "model.h"
 
 namespace dash {
@@ -53,6 +54,13 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
     const bool ok = !a.isNull() && a.size() >= 2;
     m.rooms[r].t = ok ? ival(a[0], NA_T) : NA_T;
     m.rooms[r].h = ok ? ival(a[1], NA_H) : NA_H;
+  }
+
+  m.vent.clear();
+  for (JsonVariantConst k : x["vent"].as<JsonArrayConst>()) {
+    const char *key = k | "";
+    for (int r = 0; r < ROOM_COUNT; r++)
+      if (strcmp(key, ROOM_KEYS[r]) == 0) m.vent.push_back(r);
   }
 
   m.ct_open = ival(x["contacts"]["open"], NA_H);

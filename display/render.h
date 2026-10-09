@@ -442,25 +442,43 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   }
 
   // --- Hint bar: only when action is needed ---
-  const std::string attention =
-      !m.batt_low ? m.attention : (m.attention.empty() ? std::string("Akku schwach") : "Akku schwach · " + m.attention);
-  if (ct_open || !attention.empty()) {
+  // Left: open contacts, or without them the rooms to ventilate with their humidity.
+  // Right: "Akku schwach", then "Lüften: ..." (only next to open contacts), then the attention text.
+  const bool vent = !m.vent.empty();
+  std::string attention;
+  if (m.batt_low) attention = "Akku schwach";
+  if (ct_open && vent) {
+    std::string v;
+    for (int r : m.vent) v += (v.empty() ? "" : " · ") + room_short(r);
+    attention += (attention.empty() ? "" : " · ") + ("Lüften: " + v);
+  }
+  if (!m.attention.empty()) attention += (attention.empty() ? "" : " · ") + m.attention;
+  if (ct_open || vent || !attention.empty()) {
     it.filled_rectangle(16, 216, 768, 44, DARK);
+    const bool left = ct_open || vent;
     int right_edge = 770;
     if (!attention.empty()) {
-      const std::string a = P.fit(attention, F.hint, ct_open ? 360 : 740);
+      const std::string a = P.fit(attention, F.hint, left ? 360 : 740);
       it.print(770, 245, F.hint, PAPER, TextAlign::BASELINE_RIGHT, a.c_str());
       right_edge = 770 - P.width_of(a, F.hint) - 24;
     }
-    if (ct_open) {
-      const std::string head = esphome::to_string(m.ct_open) + " offen";
+    if (left) {
+      std::string head;
+      std::vector<std::string> items;
+      if (ct_open) {
+        head = esphome::to_string(m.ct_open) + " offen";
+        items = ct_names;
+      } else {
+        head = "Lüften";
+        for (int r : m.vent) items.push_back(room_short(r) + (R[r].h == NA_H ? "" : " " + pct(R[r].h)));
+      }
       it.print(30, 245, F.hint_b, PAPER, TextAlign::BASELINE_LEFT, head.c_str());
       const int nx = 30 + P.width_of(head, F.hint_b) + 14;
       std::string line;
-      for (size_t k = 0; k < ct_names.size(); k++) {
-        const std::string cand = line.empty() ? ct_names[k] : line + " · " + ct_names[k];
+      for (size_t k = 0; k < items.size(); k++) {
+        const std::string cand = line.empty() ? items[k] : line + " · " + items[k];
         if (nx + P.width_of(cand + " +9", F.hint) > right_edge) {
-          line += " +" + esphome::to_string(ct_names.size() - k);
+          line += " +" + esphome::to_string(items.size() - k);
           break;
         }
         line = cand;
@@ -495,9 +513,19 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     }
     if (draw) it.print(cx, y, F.room, DARK, TextAlign::BASELINE_LEFT, r.name);
     cx += P.width_of(r.name, F.room) + 10;
-    const std::string v = deg(r.t) + "  " + pct(r.h);
-    if (draw) it.print(cx, y, F.value, TextAlign::BASELINE_LEFT, v.c_str());
-    return cx + P.width_of(v, F.value) - x;
+    const std::string t = deg(r.t) + "  ", h = pct(r.h);
+    const bool invert = std::find(m.vent.begin(), m.vent.end(), (int) (&r - R)) != m.vent.end();
+    if (draw) {
+      it.print(cx, y, F.value, TextAlign::BASELINE_LEFT, t.c_str());
+      const int hx = cx + P.width_of(t, F.value);
+      if (invert) {  // ventilation advised: humidity white on black
+        it.filled_rectangle(hx - 4, y - 19, P.width_of(h, F.value) + 8, 25, INK);
+        it.print(hx, y, F.value, PAPER, TextAlign::BASELINE_LEFT, h.c_str());
+      } else {
+        it.print(hx, y, F.value, TextAlign::BASELINE_LEFT, h.c_str());
+      }
+    }
+    return cx + P.width_of(t + h, F.value) - x;
   };
   {
     const int w = room(0, 0, "3", R[DB], false);

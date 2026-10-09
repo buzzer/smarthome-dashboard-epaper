@@ -32,7 +32,7 @@
         <path transform="translate(642 186) scale(0.6667)" d="M12,2A9,9 0 0,1 21,11H13V19A3,3 0 0,1 10,22A3,3 0 0,1 7,19V18H9V19A1,1 0 0,0 10,20A1,1 0 0,0 11,19V11H3A9,9 0 0,1 12,2Z" fill="#6A6A6A"/><text x="660" y="200" font-size="16" fill="#6A6A6A">70%</text>
         <text x="718" y="178" font-size="16" font-weight="bold">14°</text><text x="757" y="178" font-size="16" fill="#A8A8A8">9°</text>
         <rect x="16" y="216" width="768" height="44" fill="#6A6A6A"/>
-        <g fill="#fff" font-size="18"><text x="30" y="245" font-weight="bold">2 offen</text><text x="112" y="245">SZ-Fen · KZ-Fen</text></g>
+        <g fill="#fff" font-size="18"><text x="30" y="245" font-weight="bold">2 offen</text><text x="112" y="245">SZ-Fen · KZ-Fen</text><text x="770" y="245" text-anchor="end">Lüften: WK</text></g>
         <g fill="none" stroke="#6A6A6A" stroke-width="2"><polyline points="16,318 400,274 784,318"/><rect x="16" y="318" width="768" height="150"/></g>
         <g stroke="#A8A8A8" stroke-width="1"><line x1="17" y1="368" x2="783" y2="368"/><line x1="17" y1="418" x2="783" y2="418"/><line x1="400" y1="319" x2="400" y2="368"/><line x1="272" y1="418" x2="272" y2="467"/><line x1="528" y1="418" x2="528" y2="467"/></g>
         <g font-size="16" fill="#6A6A6A">
@@ -41,7 +41,8 @@
           <text x="414" y="350">Schlafz.  <tspan font-weight="bold" font-size="19" fill="#000">21°  63 %</tspan></text>
           <text x="30" y="400"><tspan font-size="13" fill="#A8A8A8">1 </tspan>Wohnzimmer  <tspan font-weight="bold" font-size="19" fill="#000">20°  65 %</tspan></text>
           <text x="364" y="400">Tür <tspan fill="#000">offen</tspan></text><text x="576" y="400">Fenster <tspan fill="#000">40 % offen</tspan></text>
-          <text x="30" y="450"><tspan font-size="13" fill="#A8A8A8">0 </tspan>Waschk.  <tspan font-weight="bold" font-size="19" fill="#000">18°  71 %</tspan></text>
+          <rect x="155" y="433" width="68" height="25" fill="#000"/>
+          <text x="30" y="450"><tspan font-size="13" fill="#A8A8A8">0 </tspan>Waschk.  <tspan font-weight="bold" font-size="19" fill="#000">18°  </tspan><tspan font-weight="bold" font-size="19" fill="#fff">78 %</tspan></text>
           <text x="286" y="450">Garage  <tspan font-weight="bold" font-size="19" fill="#000">20°  65 %</tspan></text>
           <text x="542" y="450">Werkstatt  <tspan font-weight="bold" font-size="19" fill="#000">19°  69 %</tspan></text>
         </g>
