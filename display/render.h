@@ -63,6 +63,8 @@ inline const char *owm_icon(int id, bool windy = false, bool night = false) {
   if (id == 801 || id == 802) return "\U000F0595";                 // partly cloudy
   return "\U000F0590";                                             // cloudy
 }
+static const char *const ICON_WINDOW_OPEN = "\U000F11DC";    // ventilate here
+static const char *const ICON_WINDOW_CLOSED = "\U000F11DB";  // the open window can be closed
 static const char *const ICON_UMBRELLA = "\U000F054A";  // rain probability
 static const char *const ICON_SUNRISE = "\U000F059C";   // sunrise/sunset times in the "HEUTE" header
 static const char *const ICON_SUNSET = "\U000F059B";
@@ -505,7 +507,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   it.line(528, 418, 528, 468 - 2 * inset, LIGHT);
 
   // Room: [floor] name  temperature  humidity; returns the width, draws only with draw = true
-  auto room = [&](int x, int y, const char *floor, const Room &r, bool draw) -> int {
+  auto room = [&](int x, int y, const char *floor, const Room &r, bool draw, int right = 0) -> int {
     int cx = x;
     if (floor != nullptr) {
       if (draw) it.print(cx, y, F.label, LIGHT, TextAlign::BASELINE_LEFT, floor);
@@ -525,15 +527,24 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
         it.print(hx, y, F.value, TextAlign::BASELINE_LEFT, h.c_str());
       }
     }
-    return cx + P.width_of(t + h, F.value) - x;
+    const int end = cx + P.width_of(t + h, F.value);
+    // window symbol after the humidity: ventilate here / the open window can be closed (only if it fits in the cell)
+    const int ri = &r - R;
+    const bool open_it = std::find(m.vent.begin(), m.vent.end(), ri) != m.vent.end();
+    const bool close_it = std::find(m.shut.begin(), m.shut.end(), ri) != m.shut.end();
+    if (draw && right > 0 && (open_it || close_it)) {
+      const int ix = end + 10;
+      if (ix + 16 <= right) it.print(ix, y, F.icon_s, INK, TextAlign::BASELINE_LEFT, open_it ? ICON_WINDOW_OPEN : ICON_WINDOW_CLOSED);
+    }
+    return end - x;
   };
   {
     const int w = room(0, 0, "3", R[DB], false);
     room(400 - w / 2, 310, "3", R[DB], true);
   }
-  room(30, 350, "2", R[KZ], true);
-  room(414, 350, nullptr, R[SZ], true);
-  room(30, 400, "1", R[WZ], true);
+  room(30, 350, "2", R[KZ], true, 396);
+  room(414, 350, nullptr, R[SZ], true, 780);
+  room(30, 400, "1", R[WZ], true, 322);
 
   // Living room shutters: the curtain is lowered in proportion to the position
   auto shutter = [&](int x, int y, int w, int h, int pos, bool door) {
@@ -556,9 +567,9 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   label_value(364, 400, F.room, "Tür ", shutter_text(m.roll_tu));
   shutter(530, 378, 34, 30, m.roll_fe, false);
   label_value(576, 400, F.room, "Fenster ", shutter_text(m.roll_fe));
-  room(30, 450, "0", R[WK], true);
-  room(286, 450, nullptr, R[GA], true);
-  room(542, 450, nullptr, R[WE], true);
+  room(30, 450, "0", R[WK], true, 268);
+  room(286, 450, nullptr, R[GA], true, 524);
+  room(542, 450, nullptr, R[WE], true, 780);
 }
 
 }  // namespace dash

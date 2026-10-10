@@ -8,7 +8,7 @@ substitutions:
   # Wake schedule in minutes; night pause from night_from to night_to o'clock (except while printing)
   wake_home_min: "10"
   wake_away_min: "30"
-  wake_active_min: "5"
+  wake_active_min: "10"
   night_from: "23"
   night_to: "6"
   # Battery thresholds without a voltage divider on GPIO33 (interim, measured on this board): the ADC then

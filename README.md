@@ -155,6 +155,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day, `pop` highest probability of precipitation between 6 and 21 h in % (shown from 30 %) |
 | `rooms.<key>` | `[°C, %]` or `null` | Temperature and humidity per room; keys `db kz sz wz wk ga we` (see `display/model.h`) |
 | `vent` | list of room keys | Rooms to ventilate by hand, most urgent first (`kz sz wz wk ga we`). Without open contacts the hint bar shows "Lüften" with the rooms and their humidity; next to open contacts it shows "Lüften: KZ · WK" on the right. The humidity of these rooms is drawn white on black in the house. Node-RED decides (see below) |
+| `shut` | list of room keys | Rooms with an open window or door where ventilating no longer helps (humidity below the end threshold or outside air not drier). A closed-window symbol appears after the humidity so the window can be closed. Not sent at night (22–6 h) or while away |
 | `contacts.open` | integer | Number of open windows and doors; 0 shows "all closed" |
 | `contacts.names` | list of text | Short names of the open contacts, shown in the hint bar; `GA-Tor` and `WE-Tor` are the two garage doors in layout B |
 | `attention` | text | Extra text for the hint bar, shown on the right |
@@ -171,7 +172,9 @@ Ventilation advice (`vent`) is calculated in Node-RED, not on the display: a roo
 relative humidity reaches 70 % (laundry room 75 %), the outside air is drier in absolute terms
 (at least 1.5 g/m³ less water per m³), none of the room's contacts is open, and nobody is away. It
 turns off 4 percentage points below the threshold, 15 minutes after a window was closed it is
-evaluated again, and from 22 to 6 o'clock there is no advice. The air pressure is not used.
+evaluated again, and from 22 to 6 o'clock there is no advice. The air pressure is not used. In the
+house an open-window symbol follows the humidity of rooms in `vent`; rooms in `shut` get a
+closed-window symbol (the symbol is left out if it does not fit into the room's cell).
 
 Print and scene tiles replace power and energy (print first; if both are active the scene moves to
 the right column); the maintenance tile replaces the forecast. Change detection compares everything

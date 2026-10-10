@@ -32,11 +32,11 @@
         <path transform="translate(642 186) scale(0.6667)" d="M12,2A9,9 0 0,1 21,11H13V19A3,3 0 0,1 10,22A3,3 0 0,1 7,19V18H9V19A1,1 0 0,0 10,20A1,1 0 0,0 11,19V11H3A9,9 0 0,1 12,2Z" fill="#000"/><text x="660" y="200" font-size="16" fill="#000">70%</text>
         <text x="718" y="178" font-size="16" font-weight="bold">14°</text><text x="757" y="178" font-size="16" fill="#000">9°</text>
         <rect x="16" y="216" width="768" height="44"/>
-        <g fill="#fff" font-size="18"><text x="30" y="245" font-weight="bold">2 offen</text><text x="112" y="245">SZ-Fen · KZ-Fen</text><text x="770" y="245" text-anchor="end">Lüften: WK</text></g>
+        <g fill="#fff" font-size="18"><text x="30" y="245" font-weight="bold">1 offen</text><text x="112" y="245">KZ-Fen</text><text x="770" y="245" text-anchor="end">Lüften: WK</text></g>
         <g fill="none" stroke="#000" stroke-width="2"><polyline points="16,318 400,274 784,318"/><rect x="16" y="318" width="768" height="150"/><line x1="16" y1="368" x2="784" y2="368"/><line x1="16" y1="418" x2="784" y2="418"/><line x1="400" y1="318" x2="400" y2="368"/><line x1="272" y1="418" x2="272" y2="468"/><line x1="528" y1="418" x2="528" y2="468"/></g>
         <g font-size="16">
           <text x="400" y="310" text-anchor="middle"><tspan font-size="13">3 </tspan>Dachboden  <tspan font-weight="bold" font-size="19">22°  63 %</tspan></text>
-          <text x="30" y="350"><tspan font-size="13">2 </tspan>Kinderz.  <tspan font-weight="bold" font-size="19">20°  70 %</tspan></text>
+          <text x="30" y="350"><tspan font-size="13">2 </tspan>Kinderz.  <tspan font-weight="bold" font-size="19">20°  64 %</tspan></text>
           <text x="414" y="350">Schlafz.  <tspan font-weight="bold" font-size="19">21°  63 %</tspan></text>
           <text x="30" y="400"><tspan font-size="13">1 </tspan>Wohnzimmer  <tspan font-weight="bold" font-size="19">20°  65 %</tspan></text>
           <text x="364" y="400">Tür offen</text><text x="576" y="400">Fenster 40 % offen</text>
@@ -48,4 +48,5 @@
         <rect x="327" y="370" width="28" height="4"/><rect x="330.5" y="374.5" width="21" height="37" fill="none" stroke="#000"/><rect x="345" y="393" width="3" height="6"/>
         <rect x="527" y="374" width="40" height="4"/><rect x="530.5" y="378.5" width="33" height="29" fill="none" stroke="#000"/><line x1="547" y1="378" x2="547" y2="408" stroke="#000"/><line x1="530" y1="393" x2="564" y2="393" stroke="#000"/><rect x="531" y="379" width="32" height="17"/>
         <g stroke="#fff"><line x1="532" y1="382.5" x2="562" y2="382.5"/><line x1="532" y1="386.5" x2="562" y2="386.5"/><line x1="532" y1="390.5" x2="562" y2="390.5"/><line x1="532" y1="394.5" x2="562" y2="394.5"/></g>
-      </svg>
+      <path transform="translate(230 336.00) scale(0.031250 -0.031250) translate(0 -448)" d="M448 21V405H64V21H21V-43H491V21ZM405 363V213H277V363ZM107 363H235V213H107ZM107 21V171H235V21ZM277 21V171H405V21Z" fill="#000"/><path transform="translate(234 436.00) scale(0.031250 -0.031250) translate(0 -448)" d="M448 21V405H64V21H21V-43H491V21ZM405 363V213H363V363ZM107 363H149V213H107ZM107 21V171H149V21ZM192 21V363H320V21ZM363 21V171H405V21Z" fill="#000"/>
+</svg>

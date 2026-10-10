@@ -54,6 +54,9 @@ int main() {
   m.vent = {dash::WK, dash::KZ}; step("WK added and sorted first", m, true);
   m.vent = {dash::WK}; step("KZ no longer advised", m, true);
   m.vent.clear(); step("ventilation over", m, true);
+  m.shut = {dash::KZ}; step("open window can be closed (KZ)", m, true);
+  m.shut = {dash::KZ, dash::GA}; step("garage door added to shut list", m, true);
+  m.shut.clear(); step("shut list empty again", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;

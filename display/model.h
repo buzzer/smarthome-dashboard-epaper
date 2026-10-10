@@ -72,6 +72,7 @@ struct Model {
   };
 
   std::vector<int> vent;               // rooms to ventilate by hand (RoomIdx), most urgent first
+  std::vector<int> shut;               // rooms with an open window or door that can be closed again (RoomIdx)
   int ct_open = NA_H;                  // number of open contacts
   std::vector<std::string> ct_names;   // short names, e.g. "SZ-Fen"
   std::string attention;               // short text for the hint bar

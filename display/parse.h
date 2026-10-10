@@ -56,12 +56,16 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
     m.rooms[r].h = ok ? ival(a[1], NA_H) : NA_H;
   }
 
-  m.vent.clear();
-  for (JsonVariantConst k : x["vent"].as<JsonArrayConst>()) {
-    const char *key = k | "";
-    for (int r = 0; r < ROOM_COUNT; r++)
-      if (strcmp(key, ROOM_KEYS[r]) == 0) m.vent.push_back(r);
-  }
+  auto rooms_list = [&](JsonVariantConst arr, std::vector<int> &out) {
+    out.clear();
+    for (JsonVariantConst k : arr.as<JsonArrayConst>()) {
+      const char *key = k | "";
+      for (int r = 0; r < ROOM_COUNT; r++)
+        if (strcmp(key, ROOM_KEYS[r]) == 0) out.push_back(r);
+    }
+  };
+  rooms_list(x["vent"], m.vent);
+  rooms_list(x["shut"], m.shut);
 
   m.ct_open = ival(x["contacts"]["open"], NA_H);
   slist(x["contacts"]["names"], m.ct_names);
