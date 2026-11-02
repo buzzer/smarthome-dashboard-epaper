@@ -83,10 +83,11 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
 
   JsonObjectConst car = x["car"].as<JsonObjectConst>();
   m.car_valid = !car.isNull();
-  m.car_windows = tri(car["windows"]);
-  m.car_lids = tri(car["lids"]);
-  m.car_service = tri(car["service"]);
+  m.car_online = tri(car["online"]);
   m.car_range = ival(car["range"], -1);
+  m.car_open_known = car["open"].is<JsonArrayConst>();
+  slist(car["open"], m.car_open);
+  m.car_place = sval(car["place"]);
   m.car_at = sval(car["at"]);
 
   m.roll_fe = ival(x["roller"]["fenster"], -1);

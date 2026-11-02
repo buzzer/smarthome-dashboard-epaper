@@ -164,7 +164,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `alarm` | `{ "text", "at" }` or `null` | Alarm source and time, shown as a problem in layout B |
 | `scene` | `{ "name", "since" }` or `null` | Active scene tile in place of power and energy; `Sauna` and `Kamin` also show the related room |
 | `devices.batt`, `devices.dead` | list of text | Devices with an empty battery or without messages; any entry shows the maintenance tile |
-| `car` | object or `null` | `windows`, `lids` (true = closed), `service` (true = due), `range` km, `at` text; shown in layout B |
+| `car` | object or `null` | Shown in layout B: `online` (connection to the car), `range` km, `open` (list of open doors, lids and hood; `[]` = all closed, `null` = unknown), `place` (parking place as text), `at` (time of the last update) |
 | `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
 | `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces power and energy. Node-RED sends it only while OctoPrint reports printing, progress is below 100 % and the nozzle has a target temperature |
 

@@ -77,7 +77,8 @@ inline ChangeResult changes(const Model &m, int today) {
   add("#");
   for (const auto &d : m.dead) add(d);
   section("status");
-  addi(m.car_valid); addi(m.car_windows); addi(m.car_lids); addi(m.car_service); addi(m.car_range); add(m.car_at);
+  addi(m.car_valid); addi(m.car_online); addi(m.car_range); addi(m.car_open_known); add(m.car_place); add(m.car_at);
+  for (const auto &n : m.car_open) add(n);
   section("car");
   addi(m.pr_active);
   if (m.pr_active) {

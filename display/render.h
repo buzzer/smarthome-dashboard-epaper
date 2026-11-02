@@ -199,13 +199,11 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       else
         row(0, "Beide Garagentore zu", "");
     }
-    if (m.car_valid && (m.car_windows >= 0 || m.car_lids >= 0)) {
-      if (m.car_windows == 0)
-        row(1, "Auto: Fenster offen", "");
-      else if (m.car_lids == 0)
-        row(1, "Auto: Türen oder Klappen offen", "");
+    if (m.car_valid && m.car_open_known) {
+      if (!m.car_open.empty())
+        row(1, "Auto: offen", join(m.car_open, " · "));
       else
-        row(0, "Auto: Fenster und Türen zu", "");
+        row(0, "Auto: Türen und Klappen zu", "");
     }
     {
       const Room *wet = nullptr;
@@ -247,10 +245,16 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     if (pop_shown(m.pop) >= 0) kv("Regen heute", pct(m.pop));
     ry += 18;
     if (m.car_valid) {
+      if (!m.car_at.empty())  // time of the last update, right-aligned in the label line
+        it.print(784, ry, F.room, LIGHT, TextAlign::BASELINE_RIGHT, ("Stand " + m.car_at).c_str());
       label("AUTO");
+      if (m.car_online >= 0) kv("Verbindung", m.car_online == 1 ? "online" : "offline");
       if (m.car_range >= 0) kv("Reichweite", esphome::to_string(m.car_range) + " km");
-      if (m.car_service >= 0) kv("Service", m.car_service == 1 ? "fällig" : "nicht fällig");
-      if (!m.car_at.empty()) kv("Stand", m.car_at);
+      if (!m.car_place.empty()) {
+        it.print(540, ry, F.room, DARK, TextAlign::BASELINE_LEFT, "Standort");
+        it.print(784, ry, F.hint_b, TextAlign::BASELINE_RIGHT, P.fit(m.car_place, F.hint_b, 170).c_str());
+        ry += 28;
+      }
       ry += 18;
     }
     label("GERÄTE");

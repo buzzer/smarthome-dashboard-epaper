@@ -82,8 +82,10 @@ struct Model {
   std::vector<std::string> batt, dead;
 
   bool car_valid = false;
-  int car_windows = -1, car_lids = -1, car_service = -1, car_range = -1;  // -1 unknown
-  std::string car_at;
+  int car_online = -1, car_range = -1;  // -1 unknown
+  bool car_open_known = false;          // false: open doors unknown
+  std::vector<std::string> car_open;    // open doors, lids, hood
+  std::string car_place, car_at;
 
   int roll_fe = -1, roll_tu = -1;  // living room shutters, % open
 
