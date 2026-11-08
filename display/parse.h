@@ -81,7 +81,8 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
   slist(x["devices"]["batt"], m.batt);
   slist(x["devices"]["dead"], m.dead);
 
-  JsonObjectConst car = x["car"].as<JsonObjectConst>();
+  JsonObjectConst car = x["cars"][0].as<JsonObjectConst>();
+  if (car.isNull()) car = x["car"].as<JsonObjectConst>();  // older message with a single car block
   m.car_valid = !car.isNull();
   m.car_online = tri(car["online"]);
   m.car_range = ival(car["range"], -1);
@@ -89,6 +90,16 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
   slist(car["open"], m.car_open);
   m.car_place = sval(car["place"]);
   m.car_at = sval(car["at"]);
+  m.car_name = sval(car["name"]);
+  m.car_place_at = sval(car["place_at"]);
+  m.car_odo = ival(car["odo"], -1);
+  m.car_odo_min = car["odo_min"] | false;
+  m.car_service = sval(car["service"]);
+  JsonObjectConst car2 = x["cars"][1].as<JsonObjectConst>();
+  m.car2_valid = !car2.isNull();
+  m.car2_name = sval(car2["name"]);
+  m.car2_odo = ival(car2["odo"], -1);
+  m.car2_service = sval(car2["service"]);
 
   m.roll_fe = ival(x["roller"]["fenster"], -1);
   m.roll_tu = ival(x["roller"]["tuer"], -1);

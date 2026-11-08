@@ -7,8 +7,10 @@ The display wakes up from deep sleep on a schedule, receives one JSON document f
 <img src="docs/layout-a-gray.svg" alt="Layout A: daily overview with 4 gray levels" width="800">
 
 *Layout A, the daily overview: date, today's weather, power and energy, forecast, a hint bar for open
-windows and doors, and a cross-section of the house with temperature and humidity per room and the
-living room shutters. Design mockup with example values.*
+windows and doors, a cross-section of the house with temperature and humidity per room and the
+living room shutters, and a column for the cars to the right of the house: car symbol, odometer
+(rounded to 100 km), range, parking place with the time since the car stands there, and the odometer of
+a second car. An inspection due soon is shown in the hint line. Design mockup with example values.*
 
 <img src="docs/layout-b-away.svg" alt="Layout B: checklist while away, 4 gray levels" width="800">
 
@@ -131,7 +133,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
   "alarm": null,
   "scene": null,
   "devices": { "batt": [], "dead": [] },
-  "car": null,
+  "cars": null,
   "roller": { "fenster": 100, "tuer": 40 },
   "print": null
 }
@@ -155,7 +157,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `fc[]` | array, first 3 shown | Forecast days: `n` weekday label, `i` condition ID, `hi`/`lo` °C, `gbft` strongest gust of the day, `pop` highest probability of precipitation between 6 and 21 h in % (shown from 30 %) |
 | `rooms.<key>` | `[°C, %]` or `null` | Temperature and humidity per room; keys `db kz sz wz wk ga we` (see `display/model.h`) |
 | `vent` | list of room keys | Rooms to ventilate by hand, most urgent first (`kz sz wz wk ga we`). Without open contacts the hint bar shows "Lüften" with the rooms and their humidity; next to open contacts it shows "Lüften: KZ · WK" on the right. The humidity of these rooms is drawn white on black in the house. Node-RED decides (see below) |
-| `shut` | list of room keys | Rooms with an open window or door where ventilating no longer helps (humidity below the end threshold or outside air not drier). A closed-window symbol appears after the humidity so the window can be closed. Not sent at night (22–6 h) or while away |
+| `shut` | list of room keys | Rooms with an open window or door where ventilating no longer helps. No longer drawn (the cells next to the car column have no room for the symbol) and ignored by change detection; still accepted |
 | `contacts.open` | integer | Number of open windows and doors; 0 shows "all closed" |
 | `contacts.names` | list of text | Short names of the open contacts, shown in the hint bar; `GA-Tor` and `WE-Tor` are the two garage doors in layout B |
 | `attention` | text | Extra text for the hint bar, shown on the right |
@@ -164,7 +166,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `alarm` | `{ "text", "at" }` or `null` | Alarm source and time, shown as a problem in layout B |
 | `scene` | `{ "name", "since" }` or `null` | Active scene tile in place of power and energy; `Sauna` and `Kamin` also show the related room |
 | `devices.batt`, `devices.dead` | list of text | Devices with an empty battery or without messages; any entry shows the maintenance tile |
-| `car` | object or `null` | Shown in layout B: `online` (connection to the car), `range` km, `open` (list of open doors, lids and hood; `[]` = all closed, `null` = unknown), `place` (parking place as text), `at` (time of the last update) |
+| `cars` | list of one or two objects, or `null` | The cars. Car data never causes a redraw, it shows up with the next redraw caused by house data. `cars[0]`, the car with telematics: `name`, `online` (connection), `range` km, `open` (list of open doors, lids and hood; `[]` = all closed, `null` = unknown), `place` (parking place as text, broken after the first comma), `place_at` (`"dd.mm. hh:mm"`, standing there since), `at` (time of the last update, layout B), `odo` (odometer, rounded to 100 km by the sender), `odo_min` (lower bound, shown as "≥" instead of "≈"), `service` (text, only when an inspection is due soon, e.g. `"1.000 km · 25 Tage"`). `cars[1]`, an optional second car known only from outside: `name`, `odo`, `service`. The hint line shows `service` of both cars as "Inspektion Karl 1.000 km · Honda 25 Tage" (names only with two cars): inside the hint bar if the bar is drawn anyway, otherwise as plain text on the right. A message with the older single object `car` is still read as `cars[0]` |
 | `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
 | `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces power and energy. Node-RED sends it only while OctoPrint reports printing, progress is below 100 % and the nozzle has a target temperature |
 
@@ -173,13 +175,13 @@ relative humidity reaches 70 % (laundry room 75 %), the outside air is drier in 
 (at least 1.5 g/m³ less water per m³), none of the room's contacts is open, and nobody is away. It
 turns off 4 percentage points below the threshold, 15 minutes after a window was closed it is
 evaluated again, and from 22 to 6 o'clock there is no advice. The air pressure is not used. In the
-house an open-window symbol follows the humidity of rooms in `vent`; rooms in `shut` get a
-closed-window symbol (the symbol is left out if it does not fit into the room's cell).
+house the humidity of rooms in `vent` is shown inverted (white on black).
 
 Print and scene tiles replace power and energy (print first; if both are active the scene moves to
 the right column); the maintenance tile replaces the forecast. Change detection compares everything
 visible; power, today's energy and humidities use tolerances (see `display/change.h`), so small
-fluctuations do not cause a refresh. The scenarios in `test/scenarios/` are further examples.
+fluctuations do not cause a refresh. The car data (`cars`) is deliberately not compared: it never causes a
+redraw. The scenarios in `test/scenarios/` are further examples.
 
 ## Tests
 

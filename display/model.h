@@ -81,11 +81,19 @@ struct Model {
   std::string since, alarm, alarm_at, scene, scene_since;
   std::vector<std::string> batt, dead;
 
+  // Car data never causes a redraw (display/change.h): it only shows up with the next redraw caused by house data.
   bool car_valid = false;
   int car_online = -1, car_range = -1;  // -1 unknown
   bool car_open_known = false;          // false: open doors unknown
   std::vector<std::string> car_open;    // open doors, lids, hood
-  std::string car_place, car_at;
+  std::string car_place, car_at;        // parking place, last update
+  std::string car_name, car_place_at;   // short name; "dd.mm. hh:mm" the car has been standing there since
+  int car_odo = -1;                     // odometer rounded to 100 km, -1 unknown
+  bool car_odo_min = false;             // lower bound (trips before the recording are missing)
+  std::string car_service;              // inspection due soon, e.g. "1.000 km · 25 Tage", empty = not due
+  bool car2_valid = false;              // a second car (known from Spritmonitor only)
+  std::string car2_name, car2_service;
+  int car2_odo = -1;
 
   int roll_fe = -1, roll_tu = -1;  // living room shutters, % open
 

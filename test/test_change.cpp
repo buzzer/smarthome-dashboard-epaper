@@ -54,9 +54,16 @@ int main() {
   m.vent = {dash::WK, dash::KZ}; step("WK added and sorted first", m, true);
   m.vent = {dash::WK}; step("KZ no longer advised", m, true);
   m.vent.clear(); step("ventilation over", m, true);
-  m.shut = {dash::KZ}; step("open window can be closed (KZ)", m, true);
-  m.shut = {dash::KZ, dash::GA}; step("garage door added to shut list", m, true);
-  m.shut.clear(); step("shut list empty again", m, true);
+  m.shut = {dash::KZ}; step("open window can be closed (KZ, no longer drawn)", m, false);
+  m.shut = {dash::KZ, dash::GA}; step("garage door added to shut list (not drawn)", m, false);
+  m.shut.clear(); step("shut list empty again", m, false);
+  // car data never causes a redraw
+  m.car_valid = true; m.car_online = 1; m.car_range = 400; m.car_open_known = true; step("car data appears", m, false);
+  m.car_open = {"Heckklappe"}; step("car door opens", m, false);
+  m.car_online = 0; m.car_range = 380; m.car_place = "Hauptstr. 1, Norderstedt"; m.car_place_at = "08.11. 12:05"; step("car offline, range and place change", m, false);
+  m.car_odo = 179100; m.car_odo_min = true; m.car_service = "1.000 km"; m.car_name = "Karl"; step("odometer and inspection", m, false);
+  m.car2_valid = true; m.car2_odo = 61200; m.car2_service = "25 Tage"; m.car2_name = "Honda"; step("second car appears", m, false);
+  m.rooms[dash::KZ].t = 23; step("house data change still draws (with the car data on screen)", m, true);
   step("nothing changed again", m, false);
   std::cout << (fails ? "FAILED" : "all cases passed") << std::endl;
   return fails ? 1 : 0;
