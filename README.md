@@ -192,11 +192,13 @@ AJ=../.esphome/build/home-dashboard-1/managed_components/bblanchon__arduinojson/
 g++ -std=gnu++20 -I mock -I $AJ -o build/test_change test_change.cpp && ./build/test_change
 g++ -std=gnu++20 -I mock -I $AJ -o build/test_wind test_wind.cpp && ./build/test_wind
 g++ -std=gnu++20 -I mock -I $AJ -o build/test_battery test_battery.cpp && ./build/test_battery
+g++ -std=gnu++20 -I mock -I $AJ -o build/dump_scenario dump_scenario.cpp && python3 check_glyphs.py scenarios/*.json
 python3 build_compare.py <git-rev> scenarios
 g++ -std=gnu++20 -I mock -I $AJ -o build/compare build/compare.cpp && ./build/compare scenarios/*.json
 ```
 
-`build_compare.py` compares the drawing calls of an older YAML-lambda revision with the current C++
+`check_glyphs.py` renders every scenario and fails if a printed character is missing from the glyph list of its font in
+`packages/fonts.yaml` (it would show as an empty rectangle on the display). `build_compare.py` compares the drawing calls of an older YAML-lambda revision with the current C++
 code for every scenario.
 
 ## License

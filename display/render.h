@@ -543,7 +543,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
 
   // --- House cross-section by floor (z2m/0..3), narrower than the display: the car column sits to its right ---
   constexpr int HL = 16, HR = 596, HA = 306;  // left and right edge, roof apex
-  constexpr int D1 = 209, D2 = 403;           // dividers of the ground floor (thirds)
+  constexpr int D1 = 222, D2 = 403;           // dividers of the ground floor: the laundry room needs the most room
   it.line(HL, 318, HA, 274, DARK);
   it.line(HL, 319, HA, 275, DARK);
   it.line(HA, 274, HR, 318, DARK);
@@ -566,8 +566,10 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       it.print(cx, y, F.label, LIGHT, TextAlign::BASELINE_LEFT, floor);
       cx += P.width_of(floor, F.label) + 6;
     }
-    it.print(cx, y, F.room_s, DARK, TextAlign::BASELINE_LEFT, r.name);
     const std::string t = deg(r.t), h = pct(r.h);
+    // the name must end before the temperature starts (8 px gap): shortened with … if it is too long for the cell
+    const int name_w = (right - w_hum - 8 - P.width_of(t, F.value_s) - 8) - cx;
+    it.print(cx, y, F.room_s, DARK, TextAlign::BASELINE_LEFT, P.fit(r.name, F.room_s, name_w).c_str());
     const bool invert = std::find(m.vent.begin(), m.vent.end(), (int) (&r - R)) != m.vent.end();
     it.print(right - w_hum - 8, y, F.value_s, TextAlign::BASELINE_RIGHT, t.c_str());
     if (invert) {  // ventilation advised: humidity white on black
@@ -639,7 +641,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
         it.print(CX, 394, F.room, TextAlign::BASELINE_LEFT, P.fit(place.first, F.room, CR - CX).c_str());
         if (!place.second.empty()) it.print(CX, 411, F.room, TextAlign::BASELINE_LEFT, P.fit(place.second, F.room, CR - CX).c_str());
         if (!m.car_place_at.empty())
-          it.print(CX, 427, F.label, DARK, TextAlign::BASELINE_LEFT, P.fit("seit " + m.car_place_at, F.label, CR - CX).c_str());
+          it.print(CX, 427, F.room_s, DARK, TextAlign::BASELINE_LEFT, P.fit("seit " + m.car_place_at, F.room_s, CR - CX).c_str());   // f_label has capitals only
       }
     }
     if (m.car2_valid) {

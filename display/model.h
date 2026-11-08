@@ -68,7 +68,7 @@ struct Model {
 
   Room rooms[ROOM_COUNT] = {
       {"Dachboden", "Dachb."}, {"Kinderz.", "Kinderz."}, {"Schlafz.", "Schlafz."}, {"Wohnzimmer", "Wohnz."},
-      {"Waschk.", "Waschk."},  {"Garage", "Garage"},     {"Werkstatt", "Werkst."},
+      {"Waschk.", "Waschk."},  {"Garage", "Garage"},     {"Werkst.", "Werkst."},
   };
 
   std::vector<int> vent;               // rooms to ventilate by hand (RoomIdx), most urgent first
