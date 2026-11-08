@@ -70,16 +70,15 @@ inline ChangeResult changes(const Model &m, int today) {
   section("contacts");
   for (int r : m.vent) addi(r);
   add("#");
-  for (int r : m.shut) addi(r);
+  // m.shut (open windows that can be closed) is no longer drawn: the cells next to the car column have no room for the symbol
   section("ventilation");
   add(m.alarm); add(m.alarm_at); add(m.scene); add(m.scene_since);
   for (const auto &b : m.batt) add(b);
   add("#");
   for (const auto &d : m.dead) add(d);
   section("status");
-  addi(m.car_valid); addi(m.car_online); addi(m.car_range); addi(m.car_open_known); add(m.car_place); add(m.car_at);
-  for (const auto &n : m.car_open) add(n);
-  section("car");
+  // The car (online, range, doors, place, odometer, inspection, second car) is deliberately not compared: car data never causes a
+  // redraw, it shows up with the next redraw caused by house data (at the latest at the date change).
   addi(m.pr_active);
   if (m.pr_active) {
     addi(m.pr_progress / 5);

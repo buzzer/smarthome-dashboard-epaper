@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 #include "model.h"
 
@@ -18,6 +19,7 @@ using esphome::display::TextAlign;
 
 struct Fonts {
   BaseFont *label, *room, *text, *hint, *hint_b, *fc, *value, *head, *kw, *big, *tile, *icon, *icon_big, *icon_s, *icon_xs;
+  BaseFont *room_s, *value_s, *odo, *icon_car, *icon_car_s;  // house cells next to the car column, car column
 };
 
 // ---------- Formatting ----------
@@ -63,13 +65,29 @@ inline const char *owm_icon(int id, bool windy = false, bool night = false) {
   if (id == 801 || id == 802) return "\U000F0595";                 // partly cloudy
   return "\U000F0590";                                             // cloudy
 }
-static const char *const ICON_WINDOW_OPEN = "\U000F11DC";    // ventilate here
-static const char *const ICON_WINDOW_CLOSED = "\U000F11DB";  // the open window can be closed
 static const char *const ICON_UMBRELLA = "\U000F054A";  // rain probability
 static const char *const ICON_SUNRISE = "\U000F059C";   // sunrise/sunset times in the "HEUTE" header
 static const char *const ICON_SUNSET = "\U000F059B";
 static const char *const ICON_WIND = "\U000F059D";      // wind force when "Wind 3" does not fit
-inline std::string shutter_text(int pos) {
+static const char *const ICON_CAR = "\U000F010B";       // car column
+static const char *const ICON_FUEL = "\U000F0298";      // range in the car column
+// "179100" -> "179.100"
+inline std::string de_thousands(int v) {
+  std::string d = esphome::to_string(v), r;
+  for (size_t i = 0; i < d.size(); i++) {
+    if (i > 0 && (d.size() - i) % 3 == 0) r += '.';
+    r += d[i];
+  }
+  return r;
+}
+// "Hauptstraße 1, Norderstedt" -> {"Hauptstraße 1,", "Norderstedt"}: break after the street (first comma), one line if there is none
+inline std::pair<std::string, std::string> split_place(const std::string &s) {
+  const size_t c = s.find(',');
+  if (c == std::string::npos) return {s, ""};
+  size_t n = c + 1;
+  while (n < s.size() && s[n] == ' ') n++;
+  return {s.substr(0, c + 1), s.substr(n)};
+}inline std::string shutter_text(int pos) {
   if (pos < 0) return "–";
   if (pos >= 100) return "offen";
   if (pos <= 0) return "geschlossen";
@@ -220,9 +238,12 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     // Right column: house, car, devices
     it.line(520, 66, 520, 464, LIGHT);
     int ry = 84;
+    // A place name broken into two lines needs room: tighter section labels and gaps, so the device block still fits
+    const bool wrapped = m.car_valid && !split_place(m.car_place).second.empty();
+    const int label_h = wrapped ? 28 : 32, gap_h = wrapped ? 10 : 18;
     auto label = [&](const char *t) {
       it.print(540, ry, F.label, LIGHT, TextAlign::BASELINE_LEFT, t);
-      ry += 32;
+      ry += label_h;
     };
     auto kv = [&](const char *k, const std::string &v) {
       it.print(540, ry, F.room, DARK, TextAlign::BASELINE_LEFT, k);
@@ -243,7 +264,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     kv("Leistung", power_text(m));
     if (!std::isnan(m.t_out)) kv("Außen", t_out_text(m));
     if (pop_shown(m.pop) >= 0) kv("Regen heute", pct(m.pop));
-    ry += 18;
+    ry += gap_h;
     if (m.car_valid) {
       if (!m.car_at.empty())  // time of the last update, right-aligned in the label line
         it.print(784, ry, F.room, LIGHT, TextAlign::BASELINE_RIGHT, ("Stand " + m.car_at).c_str());
@@ -251,11 +272,16 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       if (m.car_online >= 0) kv("Verbindung", m.car_online == 1 ? "online" : "offline");
       if (m.car_range >= 0) kv("Reichweite", esphome::to_string(m.car_range) + " km");
       if (!m.car_place.empty()) {
+        const auto place = split_place(m.car_place);
         it.print(540, ry, F.room, DARK, TextAlign::BASELINE_LEFT, "Standort");
-        it.print(784, ry, F.hint_b, TextAlign::BASELINE_RIGHT, P.fit(m.car_place, F.hint_b, 170).c_str());
+        it.print(784, ry, F.hint_b, TextAlign::BASELINE_RIGHT, P.fit(place.first, F.hint_b, 170).c_str());
+        if (!place.second.empty()) {
+          ry += 20;
+          it.print(784, ry, F.hint_b, TextAlign::BASELINE_RIGHT, P.fit(place.second, F.hint_b, 244).c_str());
+        }
         ry += 28;
       }
-      ry += 18;
+      ry += gap_h;
     }
     label("GERÄTE");
     kv("Batterie leer", esphome::to_string(m.batt.size()));
@@ -447,6 +473,20 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     if (shown == 0) it.print(558, 110, F.room, DARK, TextAlign::BASELINE_LEFT, "noch keine Daten");
   }
 
+  // --- Inspection due soon (Node-RED only sends it below 2000 km / 30 days): "Karl 1.000 km · Honda 25 Tage", the names only with two cars.
+  // It never draws the hint bar by itself (car data causes no redraw) but sits in the hint line: in the bar if it is drawn, else as plain text.
+  std::string service;
+  {
+    auto add = [&](const std::string &name, const std::string &text) {
+      if (text.empty()) return;
+      if (!service.empty()) service += " · ";
+      if (m.car2_valid && !name.empty()) service += name + " ";
+      service += text;
+    };
+    if (m.car_valid) add(m.car_name, m.car_service);
+    if (m.car2_valid) add(m.car2_name, m.car2_service);
+  }
+
   // --- Hint bar: only when action is needed ---
   // Left: open contacts, or without them the rooms to ventilate with their humidity.
   // Right: "Akku schwach", then "Lüften: ..." (only next to open contacts), then the attention text.
@@ -463,6 +503,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     it.filled_rectangle(16, 216, 768, 44, DARK);
     const bool left = ct_open || vent;
     int right_edge = 770;
+    if (!service.empty()) attention += (attention.empty() ? "" : " · ") + ("Inspektion " + service);
     if (!attention.empty()) {
       const std::string a = P.fit(attention, F.hint, left ? 360 : 740);
       it.print(770, 245, F.hint, PAPER, TextAlign::BASELINE_RIGHT, a.c_str());
@@ -491,64 +532,69 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       }
       it.print(nx, 245, F.hint, PAPER, TextAlign::BASELINE_LEFT, line.c_str());
     }
-  } else if (ct_known) {
-    it.print(16, 245, F.text, DARK, TextAlign::BASELINE_LEFT, "Alle Fenster und Türen zu");
+  } else {
+    if (ct_known) it.print(16, 245, F.text, DARK, TextAlign::BASELINE_LEFT, "Alle Fenster und Türen zu");
+    if (!service.empty()) {  // plain text on the right, label gray and value bold
+      const std::string v = P.fit(service, F.hint_b, 420);
+      it.print(784, 245, F.hint_b, TextAlign::BASELINE_RIGHT, v.c_str());
+      it.print(784 - P.width_of(v, F.hint_b) - 6, 245, F.text, DARK, TextAlign::BASELINE_RIGHT, "Inspektion");
+    }
   }
 
-  // --- House cross-section by floor (z2m/0..3) ---
-  it.line(16, 318, 400, 274, DARK);
-  it.line(16, 319, 400, 275, DARK);
-  it.line(400, 274, 784, 318, DARK);
-  it.line(400, 275, 784, 319, DARK);
-  it.rectangle(16, 318, 768, 150, DARK);
-  it.rectangle(17, 319, 766, 148, DARK);
+  // --- House cross-section by floor (z2m/0..3), narrower than the display: the car column sits to its right ---
+  constexpr int HL = 16, HR = 596, HA = 306;  // left and right edge, roof apex
+  constexpr int D1 = 222, D2 = 403;           // dividers of the ground floor: the laundry room needs the most room
+  it.line(HL, 318, HA, 274, DARK);
+  it.line(HL, 319, HA, 275, DARK);
+  it.line(HA, 274, HR, 318, DARK);
+  it.line(HA, 275, HR, 319, DARK);
+  it.rectangle(HL, 318, HR - HL, 150, DARK);
+  it.rectangle(HL + 1, 319, HR - HL - 2, 148, DARK);
   // Inner lines light gray; in grayscale kept inside the double outline so it is not interrupted
   const int inset = gray ? 2 : 0;
-  it.line(16 + inset, 368, 783 - inset, 368, LIGHT);
-  it.line(16 + inset, 418, 783 - inset, 418, LIGHT);
-  it.line(400, 318 + inset, 400, 368, LIGHT);
-  it.line(272, 418, 272, 468 - 2 * inset, LIGHT);
-  it.line(528, 418, 528, 468 - 2 * inset, LIGHT);
+  it.line(HL + inset, 368, HR - 1 - inset, 368, LIGHT);
+  it.line(HL + inset, 418, HR - 1 - inset, 418, LIGHT);
+  it.line(HA, 318 + inset, HA, 368, LIGHT);
+  it.line(D1, 418, D1, 468 - 2 * inset, LIGHT);
+  it.line(D2, 418, D2, 468 - 2 * inset, LIGHT);
 
-  // Room: [floor] name  temperature  humidity; returns the width, draws only with draw = true
-  auto room = [&](int x, int y, const char *floor, const Room &r, bool draw, int right = 0) -> int {
+  // Room: [floor] name left, temperature and humidity right-aligned up to `right` (right edge of the cell content)
+  const int w_hum = P.width_of("88 %", F.value_s);
+  auto room = [&](int x, int y, const char *floor, const Room &r, int right) {
     int cx = x;
     if (floor != nullptr) {
-      if (draw) it.print(cx, y, F.label, LIGHT, TextAlign::BASELINE_LEFT, floor);
+      it.print(cx, y, F.label, LIGHT, TextAlign::BASELINE_LEFT, floor);
       cx += P.width_of(floor, F.label) + 6;
     }
-    if (draw) it.print(cx, y, F.room, DARK, TextAlign::BASELINE_LEFT, r.name);
-    cx += P.width_of(r.name, F.room) + 10;
-    const std::string t = deg(r.t) + "  ", h = pct(r.h);
+    const std::string t = deg(r.t), h = pct(r.h);
+    // the name must end before the temperature starts (8 px gap): shortened with … if it is too long for the cell
+    const int name_w = (right - w_hum - 8 - P.width_of(t, F.value_s) - 8) - cx;
+    it.print(cx, y, F.room_s, DARK, TextAlign::BASELINE_LEFT, P.fit(r.name, F.room_s, name_w).c_str());
     const bool invert = std::find(m.vent.begin(), m.vent.end(), (int) (&r - R)) != m.vent.end();
-    if (draw) {
-      it.print(cx, y, F.value, TextAlign::BASELINE_LEFT, t.c_str());
-      const int hx = cx + P.width_of(t, F.value);
-      if (invert) {  // ventilation advised: humidity white on black
-        it.filled_rectangle(hx - 4, y - 19, P.width_of(h, F.value) + 8, 25, INK);
-        it.print(hx, y, F.value, PAPER, TextAlign::BASELINE_LEFT, h.c_str());
-      } else {
-        it.print(hx, y, F.value, TextAlign::BASELINE_LEFT, h.c_str());
-      }
+    it.print(right - w_hum - 8, y, F.value_s, TextAlign::BASELINE_RIGHT, t.c_str());
+    if (invert) {  // ventilation advised: humidity white on black
+      it.filled_rectangle(right - w_hum - 4, y - 19, w_hum + 8, 25, INK);
+      it.print(right, y, F.value_s, PAPER, TextAlign::BASELINE_RIGHT, h.c_str());
+    } else {
+      it.print(right, y, F.value_s, TextAlign::BASELINE_RIGHT, h.c_str());
     }
-    const int end = cx + P.width_of(t + h, F.value);
-    // window symbol after the humidity: ventilate here / the open window can be closed (only if it fits in the cell)
-    const int ri = &r - R;
-    const bool open_it = std::find(m.vent.begin(), m.vent.end(), ri) != m.vent.end();
-    const bool close_it = std::find(m.shut.begin(), m.shut.end(), ri) != m.shut.end();
-    if (draw && right > 0 && (open_it || close_it)) {
-      const int ix = end + 10;
-      if (ix + 16 <= right) it.print(ix, y, F.icon_s, INK, TextAlign::BASELINE_LEFT, open_it ? ICON_WINDOW_OPEN : ICON_WINDOW_CLOSED);
-    }
-    return end - x;
   };
-  {
-    const int w = room(0, 0, "3", R[DB], false);
-    room(400 - w / 2, 310, "3", R[DB], true);
+  {  // attic, centered under the apex
+    const Room &r = R[DB];
+    const std::string t = deg(r.t), h = pct(r.h);
+    const int w_f = P.width_of("3", F.label) + 6, w_n = P.width_of(r.name, F.room_s) + 10, w_t = P.width_of(t, F.value_s) + 10;
+    int cx = HA - (w_f + w_n + w_t + P.width_of(h, F.value_s)) / 2;
+    it.print(cx, 310, F.label, LIGHT, TextAlign::BASELINE_LEFT, "3");
+    it.print(cx + w_f, 310, F.room_s, DARK, TextAlign::BASELINE_LEFT, r.name);
+    it.print(cx + w_f + w_n, 310, F.value_s, TextAlign::BASELINE_LEFT, t.c_str());
+    it.print(cx + w_f + w_n + w_t, 310, F.value_s, TextAlign::BASELINE_LEFT, h.c_str());
   }
-  room(30, 350, "2", R[KZ], true, 396);
-  room(414, 350, nullptr, R[SZ], true, 780);
-  room(30, 400, "1", R[WZ], true, 322);
+  room(30, 350, "2", R[KZ], HA - 8);
+  room(HA + 14, 350, nullptr, R[SZ], HR - 8);
+  room(30, 400, "1", R[WZ], 250);
+  room(30, 450, "0", R[WK], D1 - 8);
+  room(D1 + 14, 450, nullptr, R[GA], D2 - 8);
+  room(D2 + 14, 450, nullptr, R[WE], HR - 8);
 
   // Living room shutters: the curtain is lowered in proportion to the position
   auto shutter = [&](int x, int y, int w, int h, int pos, bool door) {
@@ -567,13 +613,44 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     it.filled_rectangle(x + 1, y + 1, w - 2, closed, DARK);
     for (int ly = y + 4; ly < y + 1 + closed; ly += 4) it.line(x + 2, ly, x + w - 3, ly, PAPER);  // slats
   };
-  shutter(330, 374, 22, 38, m.roll_tu, true);
-  label_value(364, 400, F.room, "Tür ", shutter_text(m.roll_tu));
-  shutter(530, 378, 34, 30, m.roll_fe, false);
-  label_value(576, 400, F.room, "Fenster ", shutter_text(m.roll_fe));
-  room(30, 450, "0", R[WK], true, 268);
-  room(286, 450, nullptr, R[GA], true, 524);
-  room(542, 450, nullptr, R[WE], true, 780);
+  shutter(264, 374, 22, 38, m.roll_tu, true);
+  label_value(298, 400, F.room_s, "Tür ", shutter_text(m.roll_tu));
+  shutter(380, 378, 34, 30, m.roll_fe, false);
+  label_value(426, 400, F.room_s, "Fenster ", shutter_text(m.roll_fe));
+
+  // --- Car column: car 1 in detail, car 2 (Spritmonitor only) as a footer line; always drawn so nothing moves ---
+  {
+    constexpr int CX = 620, CR = 784;
+    it.line(608, 270, 608, 468, LIGHT);
+    it.print(CX + 24, 300, F.icon_car, m.car_valid ? INK : LIGHT, TextAlign::CENTER, ICON_CAR);
+    it.print(CR, 296, F.label, LIGHT, TextAlign::BASELINE_RIGHT, "AUTO");
+    if (!m.car_valid) {
+      it.print(CX, 344, F.room, LIGHT, TextAlign::BASELINE_LEFT, "keine Daten");
+    } else {
+      if (m.car_odo >= 0) {
+        const std::string prefix = m.car_odo_min ? "≥ " : "≈ ";
+        it.print(CX, 344, F.odo, DARK, TextAlign::BASELINE_LEFT, prefix.c_str());
+        it.print(CX + P.width_of(prefix, F.odo), 344, F.odo, INK, TextAlign::BASELINE_LEFT, (de_thousands(m.car_odo) + " km").c_str());
+      }
+      if (m.car_range >= 0) {
+        it.print(CX + 10, 359, F.icon_car_s, DARK, TextAlign::CENTER, ICON_FUEL);
+        it.print(CX + 26, 366, F.hint_b, TextAlign::BASELINE_LEFT, (esphome::to_string(m.car_range) + " km").c_str());
+      }
+      if (!m.car_place.empty()) {
+        const auto place = split_place(m.car_place);
+        it.print(CX, 394, F.room, TextAlign::BASELINE_LEFT, P.fit(place.first, F.room, CR - CX).c_str());
+        if (!place.second.empty()) it.print(CX, 411, F.room, TextAlign::BASELINE_LEFT, P.fit(place.second, F.room, CR - CX).c_str());
+        if (!m.car_place_at.empty())
+          it.print(CX, 427, F.room_s, DARK, TextAlign::BASELINE_LEFT, P.fit("seit " + m.car_place_at, F.room_s, CR - CX).c_str());   // f_label has capitals only
+      }
+    }
+    if (m.car2_valid) {
+      it.line(CX, 440, CR, 440, LIGHT);
+      it.print(CX + 10, 454, F.icon_car_s, DARK, TextAlign::CENTER, ICON_CAR);
+      const std::string km = m.car2_odo >= 0 ? de_thousands(m.car2_odo) + " km" : std::string("–");
+      it.print(CX + 32, 463, F.hint_b, TextAlign::BASELINE_LEFT, km.c_str());
+    }
+  }
 }
 
 }  // namespace dash

@@ -58,16 +58,39 @@ font:
     id: f_icon
     size: 40
     glyphs: ["\U000F0599", "\U000F0595", "\U000F0590", "\U000F0597", "\U000F0596", "\U000F0598", "\U000F067F", "\U000F0593", "\U000F0591", "\U000F059D", "\U000F059E", "\U000F0594", "\U000F0F31"]
-  # small icons: umbrella (probability of precipitation), wind, window open/closed (ventilation advice in the house)
+  # small icons: umbrella (probability of precipitation), wind
   - file: "Fonts/materialdesignicons.ttf"
     id: f_icon_s
     size: 16
-    glyphs: ["\U000F054A", "\U000F059D", "\U000F11DC", "\U000F11DB"]
+    glyphs: ["\U000F054A", "\U000F059D"]
   # sunrise/sunset symbols in the "HEUTE" header
   - file: "Fonts/materialdesignicons.ttf"
     id: f_icon_xs
     size: 13
     glyphs: ["\U000F059C", "\U000F059B"]
+  # house cells next to the car column: one step smaller than f_room / f_value
+  - file: "Fonts/Verdana.ttf"
+    id: f_room_s
+    size: 14
+    glyphs: [' ', '!', '"', '#', '$', '%', '&', '''', '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\', ']', '^', '_', '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~', 'Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü', 'ß', '°', '–', '·', '…']
+  - file: "Fonts/VerdanaBold.ttf"
+    id: f_value_s
+    size: 18
+    glyphs: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', '-', '–', '°', '%']
+  # odometer in the car column ("≈ 179.100 km", "≥" for a lower bound)
+  - file: "Fonts/VerdanaBold.ttf"
+    id: f_odo
+    size: 20
+    glyphs: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', ' ', 'k', 'm', '≈', '≥']
+  # car symbol (mdi-car) of the car column, small: car symbol and fuel pump (mdi-gas-station) next to range and second car
+  - file: "Fonts/materialdesignicons.ttf"
+    id: f_icon_car
+    size: 48
+    glyphs: ["\U000F010B"]
+  - file: "Fonts/materialdesignicons.ttf"
+    id: f_icon_car_s
+    size: 20
+    glyphs: ["\U000F010B", "\U000F0298"]
   # large weather icon below "Heute" (today)
   - file: "Fonts/materialdesignicons.ttf"
     id: f_icon_big
