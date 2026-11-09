@@ -46,6 +46,12 @@ int main() {
   m.pr_active = true; m.pr_progress = 10; step("print starts (replaces power)", m, true);
   m.power = 400; m.en_today = 4.8f; step("power and energy change during the print (not shown)", m, false);
   m.pr_active = false; step("print ends (power shown again)", m, true);
+  m.wa_active = true; m.wa_progress = 10; m.wa_left = 3550; m.wa_end = "14:47"; step("washer starts (replaces power)", m, true);
+  m.power = 700; m.en_today = 5.4f; step("power and energy change during the washer (not shown)", m, false);
+  m.wa_left = 3500; m.wa_progress = 11; step("washer: 50 s less time left (same 10 minute step)", m, false);
+  m.wa_left = 2900; m.wa_progress = 28; step("washer: 10 minutes later", m, true);
+  m.wa_done = true; m.wa_left = 0; m.wa_end = "14:42"; step("washer finished", m, true);
+  m.wa_active = false; step("washer off (power shown again)", m, true);
   m.night = true; step("sunset alone (moon appears with the next redraw)", m, false);
   m.sunrise = "07:42"; m.sunset = "18:51"; step("sun times appear", m, true);
   m.sunrise = "07:44"; m.sunset = "18:49"; step("next day: sun times change", m, true);

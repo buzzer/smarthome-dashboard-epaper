@@ -69,6 +69,7 @@ class Display {
     va_end(a);
     print(x, y, f, c, al, b);
   }
+  void draw_pixel_at(int x, int y, Color c = COLOR_ON) { rec("px %d,%d c%d", x, y, c.v); }
   void line(int x1, int y1, int x2, int y2, Color c = COLOR_ON) { rec("line %d,%d %d,%d c%d", x1, y1, x2, y2, c.v); }
   void rectangle(int x, int y, int w, int h, Color c = COLOR_ON) { rec("rect %d,%d %dx%d c%d", x, y, w, h, c.v); }
   void filled_rectangle(int x, int y, int w, int h, Color c = COLOR_ON) {

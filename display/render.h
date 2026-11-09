@@ -119,6 +119,24 @@ template<typename D> struct Painter {
       it.line(x + 5, y - 3 + d, x + 15, y - 16 + d, c);
     }
   }
+  // Ring (donut) around (cx, cy): the first pct % clockwise from 12 o'clock in `on`; the rest in `rest`
+  // (with checker = true as every second pixel only, for black and white). There is no arc primitive in ESPHome.
+  void ring(int cx, int cy, int r_out, int r_in, int pct, Color on, Color rest, bool checker) {
+    const float two_pi = 6.2831853f;
+    for (int dy = -r_out; dy <= r_out; dy++) {
+      for (int dx = -r_out; dx <= r_out; dx++) {
+        const int d2 = dx * dx + dy * dy;
+        if (d2 > r_out * r_out || d2 < r_in * r_in) continue;
+        float a = atan2f((float) dx, (float) -dy);  // 0 at the top, clockwise
+        if (a < 0) a += two_pi;
+        if (a * 100.0f < pct * two_pi) {
+          it.draw_pixel_at(cx + dx, cy + dy, on);
+        } else if (!checker || ((cx + dx + cy + dy) & 1) == 0) {
+          it.draw_pixel_at(cx + dx, cy + dy, rest);
+        }
+      }
+    }
+  }
   void cross_mark(int x, int y, Color c) {
     for (int d = 0; d < 3; d++) {
       it.line(x + d, y - 15, x + 13 + d, y - 1, c);
@@ -381,6 +399,30 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
     if (!std::isnan(m.pr_tool) && !std::isnan(m.pr_bed))
       it.printf(x, 200, F.room, DARK, TextAlign::BASELINE_LEFT, "Düse %.0f° · Bett %.0f°", m.pr_tool, m.pr_bed);
   };
+  // Washing machine: donut with progress, time left and end time; x = left edge of the column.
+  // The phase comes from the ThinQ state (`ph`); without it it is derived from the time left.
+  auto wash_tile = [&](int x) {
+    it.print(x, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "WASCHEN");
+    const int p = m.wa_done ? 100 : std::max(0, std::min(100, m.wa_progress));
+    const int cx = x + 46, cy = 134, tx = x + 106;
+    P.ring(cx, cy, 44, 32, p, INK, LIGHT, !gray);
+    if (m.wa_done) {
+      P.check_mark(cx - 8, cy + 8, INK);
+      it.print(tx, 138, F.head, TextAlign::BASELINE_LEFT, "Fertig");
+      if (!m.wa_end.empty()) it.printf(tx, 168, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.wa_end.c_str());
+      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, "Wäsche entnehmen");
+      return;
+    }
+    it.printf(cx, cy + 7, F.value, TextAlign::BASELINE_CENTER, "%d %%", p);
+    if (m.wa_left >= 0) {
+      const int min = (m.wa_left + 59) / 60;
+      it.print(tx, 108, F.label, LIGHT, TextAlign::BASELINE_LEFT, "NOCH");
+      it.printf(tx, 138, F.head, TextAlign::BASELINE_LEFT, "%d:%02d h", min / 60, min % 60);
+      const std::string phase = !m.wa_phase.empty() ? m.wa_phase : min > 20 ? "Waschen" : min > 8 ? "Spülen" : "Schleudern";
+      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, phase.c_str());
+    }
+    if (!m.wa_end.empty()) it.printf(tx, 166, F.text, TextAlign::BASELINE_LEFT, "Ende %s", m.wa_end.c_str());
+  };
   auto scene_tile = [&](int x) {
     it.print(x, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "SZENE AKTIV");
     it.print(x - 2, 122, F.tile, TextAlign::BASELINE_LEFT, P.fit(m.scene, F.tile, 220).c_str());
@@ -397,9 +439,13 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
 
   // --- Middle column: running 3D print or active scene, otherwise power and energy ---
   // (the forecast stays visible; with print and scene at the same time the scene moves to the right column)
-  const bool scene_right = m.pr_active && !m.scene.empty();
+  // Middle column priority: print, washer, scene. The scene (or, with print and washer, the washer) moves to the right column.
+  const bool scene_right = (m.pr_active || m.wa_active) && !m.scene.empty();
+  const bool wash_right = m.pr_active && m.wa_active && !scene_right;
   if (m.pr_active) {
     print_tile(314);
+  } else if (m.wa_active) {
+    wash_tile(314);
   } else if (!m.scene.empty()) {
     scene_tile(314);
   } else {
@@ -424,9 +470,11 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
   it.line(540, 62, 540, 200, LIGHT);
 
   // --- Right column: context tile, otherwise forecast ---
-  // Priority: scene (only while a print is shown in the middle), maintenance
+  // Priority: scene (while print or washer is shown in the middle), washer (while print is shown in the middle), maintenance
   if (scene_right) {
     scene_tile(558);
+  } else if (wash_right) {
+    wash_tile(558);
   } else if (!m.batt.empty() || !m.dead.empty()) {
     it.filled_rectangle(548, 56, 236, 26, DARK);
     it.print(558, 74, F.label, PAPER, TextAlign::BASELINE_LEFT, "WARTUNG");

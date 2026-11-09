@@ -87,6 +87,14 @@ inline ChangeResult changes(const Model &m, int today) {
     addi(std::isnan(m.pr_bed) ? -1 : (int) lroundf(m.pr_bed / 5));
   }
   section("printer");
+  addi(m.wa_active);
+  if (m.wa_active) {
+    addi(m.wa_done);
+    addi(m.wa_left / 600);  // the wake interval is 10 minutes
+    add(m.wa_end);
+    add(m.wa_phase);
+  }
+  section("washer");
   addi(m.roll_fe); addi(m.roll_tu);
   section("shutters");
   for (const auto &r : m.rooms) addi(r.t);
@@ -96,7 +104,7 @@ inline ChangeResult changes(const Model &m, int today) {
   // Tolerances
   const int NA = INT32_MIN;
   auto hum = [&](int v) -> int { return v == NA_H ? NA : v; };
-  const bool power_shown = m.scene.empty() && !m.pr_active;  // scene or print replace power and energy
+  const bool power_shown = m.scene.empty() && !m.pr_active && !m.wa_active;  // scene, print or washer replace power and energy
   const int cur[10] = {m.power == NA_P || !power_shown ? NA : m.power,
                        std::isnan(m.en_today) || !power_shown ? NA : (int) lroundf(m.en_today * 10),
                        hum(m.h_out),
