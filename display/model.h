@@ -110,6 +110,7 @@ struct Model {
   bool wa_done = false;    // cycle finished: wa_end is the time it ended
   int wa_progress = 0;     // %
   int wa_left = -1;        // seconds, -1 unknown
+  std::string wa_phase;    // "Waschen", "Spülen", ... from the ThinQ state; empty = derive from the time left
   std::string wa_end;      // "hh:mm": expected end while running, end time when done
 };
 

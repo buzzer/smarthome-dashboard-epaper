@@ -400,7 +400,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       it.printf(x, 200, F.room, DARK, TextAlign::BASELINE_LEFT, "Düse %.0f° · Bett %.0f°", m.pr_tool, m.pr_bed);
   };
   // Washing machine: donut with progress, time left and end time; x = left edge of the column.
-  // The phase is derived from the time left: the ThinQ states RINSING and SPINNING are not reliably reported.
+  // The phase comes from the ThinQ state (`ph`); without it it is derived from the time left.
   auto wash_tile = [&](int x) {
     it.print(x, 74, F.label, LIGHT, TextAlign::BASELINE_LEFT, "WASCHEN");
     const int p = m.wa_done ? 100 : std::max(0, std::min(100, m.wa_progress));
@@ -418,7 +418,8 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       const int min = (m.wa_left + 59) / 60;
       it.print(tx, 108, F.label, LIGHT, TextAlign::BASELINE_LEFT, "NOCH");
       it.printf(tx, 138, F.head, TextAlign::BASELINE_LEFT, "%d:%02d h", min / 60, min % 60);
-      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, min > 20 ? "Waschen" : min > 8 ? "Spülen" : "Schleudern");
+      const std::string phase = !m.wa_phase.empty() ? m.wa_phase : min > 20 ? "Waschen" : min > 8 ? "Spülen" : "Schleudern";
+      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, phase.c_str());
     }
     if (!m.wa_end.empty()) it.printf(tx, 166, F.text, TextAlign::BASELINE_LEFT, "Ende %s", m.wa_end.c_str());
   };

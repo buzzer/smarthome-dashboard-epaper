@@ -92,6 +92,7 @@ inline ChangeResult changes(const Model &m, int today) {
     addi(m.wa_done);
     addi(m.wa_left / 600);  // the wake interval is 10 minutes
     add(m.wa_end);
+    add(m.wa_phase);
   }
   section("washer");
   addi(m.roll_fe); addi(m.roll_tu);

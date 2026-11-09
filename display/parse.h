@@ -117,6 +117,7 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
   m.wa_progress = ival(wa["p"], 0);
   m.wa_left = ival(wa["left"], -1);
   m.wa_end = sval(wa["end"]);
+  m.wa_phase = sval(wa["ph"]);
 
   m.valid = true;
   return true;
