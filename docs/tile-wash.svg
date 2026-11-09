@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="244" height="150" viewBox="0 0 244 150" role="img" aria-label="Context tile: washing machine" font-family="Verdana, 'DejaVu Sans', sans-serif" fill="#000">
         <rect width="244" height="150" fill="#fff"/>
-        <text x="10" y="18" font-size="13" fill="#A8A8A8">WASCHEN</text>
-        <circle cx="52" cy="82" r="38" fill="none" stroke="#A8A8A8" stroke-width="12"/>
-        <circle cx="52" cy="82" r="38" fill="none" stroke="#000" stroke-width="12" stroke-dasharray="145.6 93.1" transform="rotate(-90 52 82)"/>
-        <text x="52" y="89" font-size="19" text-anchor="middle">61 %</text>
-        <text x="106" y="52" font-size="13" fill="#A8A8A8">NOCH</text>
-        <text x="106" y="82" font-size="24" font-weight="bold">0:27 h</text>
-        <text x="106" y="110" font-size="17">Ende 14:14</text>
-        <text x="106" y="136" font-size="16" fill="#6A6A6A">Waschen</text>
+        <text x="10" y="18" font-size="13" fill="#A8A8A8">WASCHEN</text><circle cx="56" cy="78" r="38" fill="none" stroke="#A8A8A8" stroke-width="12"/><circle cx="56" cy="78" r="38" fill="none" stroke="#000" stroke-width="12" stroke-dasharray="150.4 88.3" transform="rotate(-90 56 78)"/><text x="56" y="85" font-size="19" text-anchor="middle">63 %</text><text x="116" y="52" font-size="13" fill="#A8A8A8">NOCH</text><text x="116" y="82" font-size="24" font-weight="bold">0:27 h</text><text x="116" y="110" font-size="17">Ende 10:41</text><text x="116" y="136" font-size="16" fill="#6A6A6A">Spülen</text>
       </svg>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="244" height="150" viewBox="0 0 244 150" role="img" aria-label="Context tile: washing machine finished" font-family="Verdana, 'DejaVu Sans', sans-serif" fill="#000">
+        <rect width="244" height="150" fill="#fff"/>
+        <text x="10" y="18" font-size="13" fill="#A8A8A8">WASCHEN</text><circle cx="56" cy="78" r="38" fill="none" stroke="#A8A8A8" stroke-width="12"/><circle cx="56" cy="78" r="38" fill="none" stroke="#000" stroke-width="12" stroke-dasharray="238.8 0.0" transform="rotate(-90 56 78)"/><polyline points="40,80 51,92 73,66" fill="none" stroke="#000" stroke-width="6" stroke-linecap="square"/><text x="116" y="82" font-size="24" font-weight="bold">Fertig</text><text x="116" y="112" font-size="17" fill="#6A6A6A">seit 10:41</text><text x="116" y="136" font-size="16" fill="#6A6A6A">Entnehmen</text>
+      </svg>
