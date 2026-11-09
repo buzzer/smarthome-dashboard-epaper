@@ -21,7 +21,16 @@ recedes into gray. Design mockup with example values.*
 While a 3D print is running, the washing machine is on or a scene is active, a context tile replaces power and energy in the
 middle column, so the forecast stays visible. Battery devices that need attention replace the forecast:
 
-<img src="docs/tile-print.svg" alt="Tile: 3D print" width="244"> <img src="docs/tile-wash.svg" alt="Tile: washing machine" width="244"> <img src="docs/tile-scene.svg" alt="Tile: active scene" width="244"> <img src="docs/tile-maintenance.svg" alt="Tile: maintenance" width="244">
+<img src="docs/tile-print.svg" alt="Tile: 3D print" width="244"> <img src="docs/tile-wash.svg" alt="Tile: washing machine" width="244"> <img src="docs/tile-wash-done.svg" alt="Tile: washing machine finished" width="244"> <img src="docs/tile-scene.svg" alt="Tile: active scene" width="244"> <img src="docs/tile-maintenance.svg" alt="Tile: maintenance" width="244">
+
+The washing machine tile (an LG washer-dryer via the [ThinQ bridge](https://github.com/buzzer/lg-washer-bridge)) shows a donut with the
+progress, the time left, the expected end and the phase (Waschen, Spülen, Schleudern). When the program has ended it shows
+"Fertig" with the end time for 30 minutes. In the daily overview it sits in the middle column:
+
+<img src="docs/layout-a-wash.svg" alt="Layout A with the washing machine tile, 4 gray levels" width="800">
+
+*Layout A while the washing machine runs (design mockup with example values; the tile itself was checked on the display with a real
+wash cycle).*
 
 - `HomeDashboard1.yaml`: main file with the settings (substitutions)
 - `packages/`: board, display driver, network/MQTT, fonts, battery, wake and sleep cycle
@@ -170,7 +179,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `cars` | list of one or two objects, or `null` | The cars. Car data never causes a redraw, it shows up with the next redraw caused by house data. `cars[0]`, the car with telematics: `name`, `online` (connection), `range` km, `open` (list of open doors, lids and hood; `[]` = all closed, `null` = unknown), `place` (parking place as text, broken after the first comma), `place_at` (`"dd.mm. hh:mm"`, standing there since), `at` (time of the last update, layout B), `odo` (odometer, rounded to 100 km by the sender), `odo_min` (lower bound, shown as "≥" instead of "≈"), `service` (text, only when an inspection is due soon, e.g. `"1.000 km · 25 Tage"`). `cars[1]`, an optional second car known only from outside: `name`, `odo`, `service`. The hint line shows `service` of both cars as "Inspektion Karl 1.000 km · Honda 25 Tage" (names only with two cars): inside the hint bar if the bar is drawn anyway, otherwise as plain text on the right. A message with the older single object `car` is still read as `cars[0]` |
 | `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
 | `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces power and energy. Node-RED sends it only while OctoPrint reports printing, progress is below 100 % and the nozzle has a target temperature |
-| `wash` | object or `null` | Washing machine (LG ThinQ bridge, topic `washer/state/<deviceId>`): `p` progress %, `left` seconds, `end` expected end `"hh:mm"`, `ph` phase text; `done: true` once the cycle has ended, then `end` is the time it ended. Donut tile with time left and end time; replaces power and energy. Node-RED sends it from `runState.currentState` (`POWER_OFF` → `null`, `END` → `done`) and `timer`: `p = 1 − remain ÷ total`, `left = remain` in seconds, `end` = now + `left`. `ph` is the German name of the ThinQ state (`RUNNING` → Waschen, `RINSING` → Spülen, `SPINNING` → Schleudern, …); without it the display derives the phase from `left` |
+| `wash` | object or `null` | Washing machine (LG ThinQ bridge, topic `washer/state/<deviceId>`): `p` progress %, `left` seconds, `end` expected end `"hh:mm"`, `ph` phase text; `done: true` once the cycle has ended, then `end` is the time it ended. Donut tile with time left and end time; replaces power and energy. Node-RED builds it from `runState.currentState` and `timer`: while a program runs `p = 1 − remain ÷ total`, `left = remain` in seconds, `end` = now + `left` (kept stable against the minute rounding) and `ph` the German name of the state (`RUNNING` → Waschen, `RINSING` → Spülen, `SPINNING` → Schleudern, …; without `ph` the display derives the phase from `left`). When the program ends, `done` stays for 30 minutes, then `wash` is `null` again; so is it for `POWER_OFF` without a program and when no message arrived for 15 minutes. A real cycle of the WTHT3 reported `RUNNING` → `RINSING` → `SPINNING` → `POWER_OFF` (no `END`) |
 
 Ventilation advice (`vent`) is calculated in Node-RED, not on the display: a room is listed when its
 relative humidity reaches 70 % (laundry room 75 %), the outside air is drier in absolute terms

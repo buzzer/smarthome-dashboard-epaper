@@ -410,7 +410,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       P.check_mark(cx - 8, cy + 8, INK);
       it.print(tx, 138, F.head, TextAlign::BASELINE_LEFT, "Fertig");
       if (!m.wa_end.empty()) it.printf(tx, 168, F.text, DARK, TextAlign::BASELINE_LEFT, "seit %s", m.wa_end.c_str());
-      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, "Wäsche entnehmen");
+      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, "Entnehmen");
       return;
     }
     it.printf(cx, cy + 7, F.value, TextAlign::BASELINE_CENTER, "%d %%", p);
@@ -419,7 +419,7 @@ void render(D &it, const Model &m, const Fonts &F, const T &now, bool gray = fal
       it.print(tx, 108, F.label, LIGHT, TextAlign::BASELINE_LEFT, "NOCH");
       it.printf(tx, 138, F.head, TextAlign::BASELINE_LEFT, "%d:%02d h", min / 60, min % 60);
       const std::string phase = !m.wa_phase.empty() ? m.wa_phase : min > 20 ? "Waschen" : min > 8 ? "Spülen" : "Schleudern";
-      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, phase.c_str());
+      it.print(tx, 192, F.room, DARK, TextAlign::BASELINE_LEFT, P.fit(phase, F.room, 118).c_str());  // the column ends at x + 226
     }
     if (!m.wa_end.empty()) it.printf(tx, 166, F.text, TextAlign::BASELINE_LEFT, "Ende %s", m.wa_end.c_str());
   };
