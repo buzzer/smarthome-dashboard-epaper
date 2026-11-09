@@ -74,7 +74,7 @@ script:
           const auto &m = dash::M;
           int mins = ${wake_home_min};                                   // at home
           if (m.away || m.holiday) mins = ${wake_away_min};              // away, holiday
-          if (m.pr_active || !m.scene.empty()) mins = ${wake_active_min};  // print or scene running
+          if (m.pr_active || m.wa_active || !m.scene.empty()) mins = ${wake_active_min};  // print, washer or scene running
           uint32_t secs = mins * 60;
           auto now = id(sntp_time).now();
           if (now.is_valid() && !m.pr_active) {

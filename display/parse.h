@@ -111,6 +111,13 @@ inline bool parse_model(JsonObjectConst x, Model &m) {
   m.pr_tool = fval(pr["tool"]);
   m.pr_bed = fval(pr["bed"]);
 
+  JsonObjectConst wa = x["wash"].as<JsonObjectConst>();
+  m.wa_active = !wa.isNull();
+  m.wa_done = wa["done"] | false;
+  m.wa_progress = ival(wa["p"], 0);
+  m.wa_left = ival(wa["left"], -1);
+  m.wa_end = sval(wa["end"]);
+
   m.valid = true;
   return true;
 }

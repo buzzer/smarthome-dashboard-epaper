@@ -104,6 +104,13 @@ struct Model {
   bool pr_active = false;
   int pr_progress = 0, pr_left = -1;
   float pr_tool = NAN, pr_bed = NAN;
+
+  // Washing machine (LG ThinQ via MQTT, prepared by Node-RED)
+  bool wa_active = false;  // a cycle is running or has just finished
+  bool wa_done = false;    // cycle finished: wa_end is the time it ended
+  int wa_progress = 0;     // %
+  int wa_left = -1;        // seconds, -1 unknown
+  std::string wa_end;      // "hh:mm": expected end while running, end time when done
 };
 
 // Called before every redraw in maintenance mode, if set (packages/battery.yaml measures the battery there)

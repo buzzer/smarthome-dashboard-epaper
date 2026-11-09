@@ -18,10 +18,10 @@ a second car. An inspection due soon is shown in the hint line. Design mockup wi
 humidity) and a summary of house, car and devices. Problems stay black, everything that is fine
 recedes into gray. Design mockup with example values.*
 
-While a 3D print is running or a scene is active, a context tile replaces power and energy in the
+While a 3D print is running, the washing machine is on or a scene is active, a context tile replaces power and energy in the
 middle column, so the forecast stays visible. Battery devices that need attention replace the forecast:
 
-<img src="docs/tile-print.svg" alt="Tile: 3D print" width="244"> <img src="docs/tile-scene.svg" alt="Tile: active scene" width="244"> <img src="docs/tile-maintenance.svg" alt="Tile: maintenance" width="244">
+<img src="docs/tile-print.svg" alt="Tile: 3D print" width="244"> <img src="docs/tile-wash.svg" alt="Tile: washing machine" width="244"> <img src="docs/tile-scene.svg" alt="Tile: active scene" width="244"> <img src="docs/tile-maintenance.svg" alt="Tile: maintenance" width="244">
 
 - `HomeDashboard1.yaml`: main file with the settings (substitutions)
 - `packages/`: board, display driver, network/MQTT, fonts, battery, wake and sleep cycle
@@ -135,7 +135,8 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
   "devices": { "batt": [], "dead": [] },
   "cars": null,
   "roller": { "fenster": 100, "tuer": 40 },
-  "print": null
+  "print": null,
+  "wash": null
 }
 ```
 
@@ -169,6 +170,7 @@ optional parts (car, print tile, scene tile) are hidden. Unknown fields are igno
 | `cars` | list of one or two objects, or `null` | The cars. Car data never causes a redraw, it shows up with the next redraw caused by house data. `cars[0]`, the car with telematics: `name`, `online` (connection), `range` km, `open` (list of open doors, lids and hood; `[]` = all closed, `null` = unknown), `place` (parking place as text, broken after the first comma), `place_at` (`"dd.mm. hh:mm"`, standing there since), `at` (time of the last update, layout B), `odo` (odometer, rounded to 100 km by the sender), `odo_min` (lower bound, shown as "≥" instead of "≈"), `service` (text, only when an inspection is due soon, e.g. `"1.000 km · 25 Tage"`). `cars[1]`, an optional second car known only from outside: `name`, `odo`, `service`. The hint line shows `service` of both cars as "Inspektion Karl 1.000 km · Honda 25 Tage" (names only with two cars): inside the hint bar if the bar is drawn anyway, otherwise as plain text on the right. A message with the older single object `car` is still read as `cars[0]` |
 | `roller.fenster`, `roller.tuer` | % open | Living room shutters (window and door); 100 = open, 0 = closed |
 | `print` | object or `null` | Running 3D print: `p` progress %, `left` seconds, `tool` and `bed` °C; replaces power and energy. Node-RED sends it only while OctoPrint reports printing, progress is below 100 % and the nozzle has a target temperature |
+| `wash` | object or `null` | Washing machine (LG ThinQ bridge, topic `washer/state/<deviceId>`): `p` progress %, `left` seconds, `end` expected end `"hh:mm"`; `done: true` once the cycle has ended, then `end` is the time it ended. Donut tile with time left and end time; replaces power and energy. Node-RED sends it from `runState.currentState` (`POWER_OFF` → `null`, `END` → `done`) and `timer`: `p = 1 − remain ÷ total`, `left = remain` in seconds, `end` = now + `left`. The phase (Waschen, Spülen, Schleudern) is derived on the display from `left` (more than 20 min, more than 8 min, less), because the ThinQ states `RINSING` and `SPINNING` are not reliably reported |
 
 Ventilation advice (`vent`) is calculated in Node-RED, not on the display: a room is listed when its
 relative humidity reaches 70 % (laundry room 75 %), the outside air is drier in absolute terms
@@ -177,8 +179,8 @@ turns off 4 percentage points below the threshold, 15 minutes after a window was
 evaluated again, and from 22 to 6 o'clock there is no advice. The air pressure is not used. In the
 house the humidity of rooms in `vent` is shown inverted (white on black).
 
-Print and scene tiles replace power and energy (print first; if both are active the scene moves to
-the right column); the maintenance tile replaces the forecast. Change detection compares everything
+Print, washer and scene tiles replace power and energy (priority: print, washer, scene; the scene moves to
+the right column when print or washer is in the middle, and with print and washer together the washer takes the right column); the maintenance tile replaces the forecast. Change detection compares everything
 visible; power, today's energy and humidities use tolerances (see `display/change.h`), so small
 fluctuations do not cause a refresh. The car data (`cars`) is deliberately not compared: it never causes a
 redraw. The scenarios in `test/scenarios/` are further examples.
